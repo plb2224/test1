@@ -3,35 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Site Attendance & Management System</title>
+    <title>MS ELECTRICALS - Attendance System</title>
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background: #eef2f5; margin: 0; padding: 15px; color: #333; }
-        .box { max-width: 980px; margin: auto; background: #fff; padding: 25px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .box { max-width: 1000px; margin: auto; background: #fff; padding: 25px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         h2, h3 { color: #1a365d; margin-top: 10px; }
         .field { margin-bottom: 12px; }
         label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 13px; }
-        input, select, button { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; }
+        input, select, button, textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; }
         button { background: #0066cc; color: white; border: none; font-weight: bold; cursor: pointer; margin-top: 5px; border-radius: 6px; }
         button:hover { opacity: 0.9; }
         .hidden { display: none !important; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; background: #fff; }
-        th, td { border: 1px solid #e2e8f0; padding: 8px; text-align: center; }
-        th { background: #0066cc; color: white; }
-        .btn-danger { background: #e53e3e; width: auto; padding: 5px 10px; font-size: 11px; }
-        .btn-warning { background: #718096; width: auto; padding: 5px 10px; font-size: 11px; color: white; }
-        .btn-success { background: #38a169; width: auto; padding: 5px 10px; font-size: 11px; }
-        .btn-photo { background: #805ad5; width: auto; padding: 5px 10px; font-size: 11px; color: white; border: none; border-radius: 4px; cursor: pointer; }
-        .btn-wa { background: #25D366; width: auto; padding: 5px 10px; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        .card { background: #f8fafc; padding: 15px; border: 1px solid #cbd5e1; border-radius: 8px; margin-bottom: 15px; }
-        
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; background: #fff; }
+        th, td { border: 1px solid #e2e8f0; padding: 10px; text-align: center; }
+        th { background: #1a365d; color: white; }
+        .btn-danger { background: #e53e3e; width: auto; padding: 6px 12px; font-size: 12px; }
+        .btn-warning { background: #dd6b20; width: auto; padding: 6px 12px; font-size: 12px; color: white; }
+        .btn-success { background: #38a169; width: auto; padding: 6px 12px; font-size: 12px; }
+        .btn-photo { background: #805ad5; width: auto; padding: 6px 12px; font-size: 12px; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        .badge-pending { background: #d69e2e; color: white; padding: 4px 8px; border-radius: 12px; font-size: 11px; }
+        .badge-approved { background: #38a169; color: white; padding: 4px 8px; border-radius: 12px; font-size: 11px; }
+        .badge-rejected { background: #e53e3e; color: white; padding: 4px 8px; border-radius: 12px; font-size: 11px; }
+        .card { background: #f8fafc; padding: 15px; border: 1px solid #cbd5e1; border-radius: 8px; margin-bottom: 20px; }
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 15px; }
         .stat-card { padding: 15px; border-radius: 8px; color: white; text-align: center; }
         .bg-blue { background: #3182ce; }
         .bg-green { background: #38a169; }
         .bg-red { background: #e53e3e; }
-
         .login-card { max-width: 400px; margin: 30px auto; padding: 20px; border: 1px solid #cbd5e1; border-radius: 8px; background: #f8fafc; }
+        
+        @media (max-width: 768px) {
+            .flex-row { flex-direction: column; }
+            .flex-row input, .flex-row select, .flex-row button { width: 100%; margin-bottom: 10px; }
+        }
     </style>
 </head>
 <body>
@@ -39,22 +44,21 @@
 <div class="box">
     <!-- LOGIN SECTION -->
     <div id="loginSection">
-        <h2 style="text-align:center;">Site Attendance Management System</h2>
+        <h2 style="text-align:center;">MS ELECTRICALS</h2>
+        <p style="text-align:center; color:#666; margin-top:-10px;">Site Attendance Management</p>
         
         <form class="login-card" onsubmit="handleLogin(event)">
             <div class="field">
                 <label>User ID:</label>
-                <input type="text" id="uid" placeholder="User ID daalein" required>
+                <input type="text" id="uid" placeholder="Admin ya Supervisor ID" required>
             </div>
             <div class="field">
                 <label>Password:</label>
                 <input type="password" id="upass" placeholder="Password daalein" required>
             </div>
-            
             <button type="submit">Login Karein</button>
-
             <div style="margin-top:15px; text-align:center;">
-                <button type="button" class="btn-warning" style="width:100%; padding:8px;" onclick="resetSystemData()">🔄 System Refresh</button>
+                <button type="button" class="btn-warning" style="width:100%; padding:8px;" onclick="resetSystemData()">🔄 System Data Reset</button>
             </div>
         </form>
     </div>
@@ -62,56 +66,66 @@
     <!-- ADMIN PANEL -->
     <div id="adminPanel" class="hidden">
         <div style="display:flex; justify-content:space-between; align-items:center;">
-            <h2>Admin Master Panel - Mayank Chaudhary</h2>
+            <h2>👑 Admin Master Panel - MS ELECTRICALS</h2>
             <button type="button" class="btn-danger" style="padding:8px 15px;" onclick="doLogout()">Logout</button>
         </div>
         
-        <!-- OVERVIEW COUNTERS -->
+        <!-- STATS -->
         <div class="stats-grid">
             <div class="stat-card bg-blue">
-                <h4 style="margin:0; font-size:13px; text-transform:uppercase;">Total Registered Labours</h4>
-                <h2 id="statTotalLabours" style="margin:8px 0 0 0; color:white; font-size:26px;">0</h2>
+                <h4 style="margin:0; font-size:13px; text-transform:uppercase;">Total Labours</h4>
+                <h2 id="statTotalLabours" style="margin:8px 0 0 0; font-size:26px;">0</h2>
             </div>
             <div class="stat-card bg-green">
-                <h4 style="margin:0; font-size:13px; text-transform:uppercase;">Aaj Ke Total Present</h4>
-                <h2 id="statTodayPresent" style="margin:8px 0 0 0; color:white; font-size:26px;">0</h2>
-            </div>
-            <div class="stat-card bg-red">
-                <h4 style="margin:0; font-size:13px; text-transform:uppercase;">Aaj Ke Total Absent</h4>
-                <h2 id="statTodayAbsent" style="margin:8px 0 0 0; color:white; font-size:26px;">0</h2>
+                <h4 style="margin:0; font-size:13px; text-transform:uppercase;">Aaj Ke Present</h4>
+                <h2 id="statTodayPresent" style="margin:8px 0 0 0; font-size:26px;">0</h2>
             </div>
         </div>
 
-        <!-- LABOUR MANAGEMENT -->
+        <!-- DRIVE LINK -->
         <div class="card">
-            <h3>Labour Master List (Add / Edit / Remove)</h3>
-            <div style="display:flex; gap:10px; margin-bottom:10px;">
-                <input type="text" id="labName" placeholder="Labour Naam">
-                <input type="text" id="labEmpId" placeholder="Labour ID (eg: L001)">
-                <button type="button" class="btn-success" onclick="addLabour()">Labour Save Karein</button>
+            <h3 style="margin:0 0 8px 0;">☁️ Google Drive Auto-Save Link</h3>
+            <div style="display:flex; gap:6px;" class="flex-row">
+                <input type="text" id="cloudUrlInput" placeholder="Paste Apps Script Web App URL here...">
+                <button type="button" class="btn-success" style="width:150px;" onclick="saveCloudUrl()">Save Link</button>
             </div>
-            <div id="labTableBox"></div>
         </div>
 
-        <!-- SUPERVISOR MANAGEMENT -->
-        <div class="card">
-            <h3>Supervisor Management</h3>
-            <div style="display:flex; gap:10px; margin-bottom:10px;">
-                <input type="text" id="newSupId" placeholder="Supervisor ID">
-                <input type="password" id="newSupPass" placeholder="Password">
-                <button type="button" class="btn-success" onclick="addSupervisor()">Supervisor Add Karein</button>
-            </div>
-            <div id="supTableBox"></div>
+        <!-- PENDING REQUESTS -->
+        <div class="card" style="border-left: 4px solid #dd6b20;">
+            <h3>🔔 Attendance Correction Requests</h3>
+            <div id="adminReqTableBox" style="overflow-x:auto;"></div>
         </div>
 
-        <!-- ATTENDANCE REPORTS & EDIT CONTROL -->
-        <div class="card">
-            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-                <h3>Date-Wise Attendance Master Control</h3>
-                <div>
-                    <button type="button" class="btn-success" onclick="exportMonthlyExcel()">📊 Download Monthly CSV</button>
+        <!-- SUPERVISOR & LABOUR MASTERS -->
+        <div style="display:flex; gap:20px; flex-wrap:wrap;">
+            <div class="card" style="flex:1; min-width:300px;">
+                <h3>Add / Remove Supervisor</h3>
+                <div style="display:flex; gap:5px;" class="flex-row">
+                    <input type="text" id="newSupId" placeholder="Sup ID">
+                    <input type="password" id="newSupPass" placeholder="Pass">
+                    <button type="button" class="btn-success" onclick="addSupervisor()">Add</button>
                 </div>
+                <div id="supTableBox"></div>
             </div>
+            <div class="card" style="flex:1; min-width:300px;">
+                <h3>Add / Remove Labour</h3>
+                <div style="display:flex; gap:5px;" class="flex-row">
+                    <input type="text" id="labName" placeholder="Name">
+                    <input type="text" id="labEmpId" placeholder="ID (L01)">
+                    <button type="button" class="btn-success" onclick="addLabour()">Add</button>
+                </div>
+                <div id="labTableBox"></div>
+            </div>
+        </div>
+
+        <!-- ATTENDANCE REPORTS -->
+        <div class="card">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                <h3>📋 Attendance Reports</h3>
+                <button type="button" class="btn-success" onclick="exportMonthlyExcel()">📊 Download CSV</button>
+            </div>
+            <input type="text" id="searchLog" placeholder="🔍 Date ya Site search karein..." onkeyup="loadAdminData()" style="margin-bottom:10px;">
             <div id="reportTableBox" style="overflow-x:auto;"></div>
         </div>
     </div>
@@ -123,98 +137,126 @@
             <button type="button" class="btn-danger" style="padding:8px 15px;" onclick="doLogout()">Logout</button>
         </div>
 
-        <div class="card">
-            <h3>Daily Attendance Entry</h3>
+        <!-- TAKE ATTENDANCE -->
+        <div class="card" id="attendanceFormCard">
+            <h3>📝 Daily Attendance Entry</h3>
             <div class="field">
                 <label>Date:</label>
                 <input type="date" id="attendanceDate">
             </div>
             <div class="field">
                 <label>Site Name:</label>
-                <input type="text" id="siteNameInput" placeholder="e.g., Electrical Main Site">
+                <input type="text" id="siteNameInput" placeholder="e.g., Main Site Phase 1">
             </div>
-
             <div class="field">
-                <label>Attendance Checklist:</label>
+                <label>📸 Group Selfie (Save in Drive):</label>
+                <input type="file" id="groupPhoto" accept="image/*" capture="environment" onchange="processImage(event)">
+                <small style="color:#666;" id="photoStatus">Upload limit & Auto-Compress active.</small>
+            </div>
+            <div class="field">
+                <label>Checklist (Tick for Present):</label>
                 <div id="checklistContainer" style="max-height:220px; overflow-y:auto; border:1px solid #ddd; padding:8px; background:#fff; border-radius:6px;"></div>
             </div>
+            <button type="button" id="submitBtn" onclick="submitAttendance()">🚀 Submit Attendance</button>
+        </div>
 
-            <button type="button" onclick="submitAttendance()">Attendance Submit Karein</button>
+        <!-- CORRECTION REQUEST -->
+        <div class="card" id="correctionFormCard">
+            <h3>⚠️ Attendance Miss Ho Gayi? (Request to Admin)</h3>
+            <div class="field">
+                <label>Kis Date ki attendance missing hai?</label>
+                <input type="date" id="reqDate">
+            </div>
+            <div class="field">
+                <label>Labour Select Karein:</label>
+                <select id="reqLabour"></select>
+            </div>
+            <div class="field">
+                <label>Reason (Kyun add karein?):</label>
+                <input type="text" id="reqReason" placeholder="e.g., Late aaya tha, system par miss ho gaya">
+            </div>
+            <button type="button" class="btn-warning" onclick="sendRequest()">📤 Admin Ko Request Bhejein</button>
+            <div id="myRequestsBox" style="margin-top:15px; font-size:12px;"></div>
         </div>
     </div>
 </div>
 
 <script>
-    // Storage Helpers
     function getStorage(key, fallback) {
-        try { let item = localStorage.getItem(key); return item ? JSON.parse(item) : fallback; } 
-        catch (e) { return fallback; }
+        try { let item = localStorage.getItem(key); return item ? JSON.parse(item) : fallback; } catch (e) { return fallback; }
     }
     function setStorage(key, val) {
         try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) {}
     }
 
     let activeUser = null;
+    let compressedImageBase64 = "";
 
-    // Bulletproof Login Logic
     function handleLogin(event) {
         event.preventDefault(); 
-        
-        let idVal = document.getElementById('uid').value;
-        let passVal = document.getElementById('upass').value;
-        let id = idVal ? idVal.trim().toLowerCase() : '';
-        let pass = passVal ? passVal.trim() : '';
+        let id = document.getElementById('uid').value.trim().toLowerCase();
+        let pass = document.getElementById('upass').value.trim();
 
-        // Admin Auth
         if (id === 'admin' && pass === 'admin123') {
             activeUser = { role: 'admin', id: 'admin' };
             document.getElementById('loginSection').classList.add('hidden');
             document.getElementById('adminPanel').classList.remove('hidden');
+            document.getElementById('cloudUrlInput').value = getStorage('cloudUrl', '');
             loadAdminData();
             return;
         }
 
-        // Supervisor Auth
-        let supervisors = getStorage('supervisors', []);
+        let supervisors = getStorage('supervisors', [{id:'lalshah', pass:'1234'}]);
         let found = supervisors.find(s => s.id.toLowerCase() === id && s.pass === pass);
-        
-        if (id === 'sup1' && pass === '1234') { found = { id: 'sup1' }; } // Default Supervisor
 
         if (found) {
             activeUser = { role: 'supervisor', id: found.id };
             document.getElementById('loginSection').classList.add('hidden');
             document.getElementById('supervisorPanel').classList.remove('hidden');
-            document.getElementById('supWelcome').innerText = "Supervisor: " + found.id;
+            document.getElementById('supWelcome').innerText = "Supervisor: " + found.id.toUpperCase();
             document.getElementById('attendanceDate').value = new Date().toISOString().split('T')[0];
             loadSupervisorChecklist();
+            loadSupervisorRequests();
         } else {
-            alert('Galat Credentials!\nAdmin: admin / admin123\nSupervisor: sup1 / 1234');
+            alert('Galat Credentials!\nAdmin: admin / admin123\nSupervisor default: lalshah / 1234');
         }
     }
 
+    function doLogout() { activeUser = null; location.reload(); }
     function resetSystemData() {
-        if(confirm("Kya aap poora system data clear karna chahte hain?")) {
+        if(confirm("Dhyan Dein! Saara data delete ho jayega. Continue?")) {
             localStorage.clear();
-            alert("System Refresh Ho Gaya Hai!");
+            alert("System Refresh Done!");
             location.reload();
         }
     }
-
-    function doLogout() {
-        activeUser = null;
-        document.getElementById('uid').value = '';
-        document.getElementById('upass').value = '';
-        document.getElementById('loginSection').classList.remove('hidden');
-        document.getElementById('adminPanel').classList.add('hidden');
-        document.getElementById('supervisorPanel').classList.add('hidden');
+    function saveCloudUrl() {
+        setStorage('cloudUrl', document.getElementById('cloudUrlInput').value.trim());
+        alert("Cloud URL Saved!");
     }
 
-    // --- ADMIN FUNCTIONS ---
+    // ================= ADMIN LOGIC =================
+    function addSupervisor() {
+        let id = document.getElementById('newSupId').value.trim();
+        let pass = document.getElementById('newSupPass').value.trim();
+        if(!id || !pass) return;
+        let sups = getStorage('supervisors', [{id:'lalshah', pass:'1234'}]);
+        if(sups.find(s => s.id.toLowerCase() === id.toLowerCase())) { alert("ID exists!"); return; }
+        sups.push({id: id, pass: pass});
+        setStorage('supervisors', sups);
+        document.getElementById('newSupId').value = '';
+        document.getElementById('newSupPass').value = '';
+        loadAdminData();
+    }
+    function deleteSupervisor(id) {
+        let sups = getStorage('supervisors', [{id:'lalshah', pass:'1234'}]).filter(s => s.id !== id);
+        setStorage('supervisors', sups);
+        loadAdminData();
+    }
     function addLabour() {
         let name = document.getElementById('labName').value.trim();
         let empId = document.getElementById('labEmpId').value.trim();
-        if(!name || !empId) { alert('Naam aur ID dono bharein!'); return; }
-        
+        if(!name || !empId) return;
         let labs = getStorage('labours', []);
         labs.push({empId: empId, name: name});
         setStorage('labours', labs);
@@ -222,128 +264,206 @@
         document.getElementById('labEmpId').value = '';
         loadAdminData();
     }
-
     function deleteLabour(empId) {
-        if(confirm(`Kya aap ID: ${empId} ko master list se nikalna chahte hain?`)) {
-            let labs = getStorage('labours', []).filter(l => l.empId !== empId);
-            setStorage('labours', labs);
-            loadAdminData();
-        }
+        let labs = getStorage('labours', []).filter(l => l.empId !== empId);
+        setStorage('labours', labs);
+        loadAdminData();
     }
-
-    function addSupervisor() {
-        let id = document.getElementById('newSupId').value.trim();
-        let pass = document.getElementById('newSupPass').value.trim();
-        if(!id || !pass) { alert('ID aur Password dono bharein!'); return; }
-        
-        let sups = getStorage('supervisors', []);
-        sups.push({id: id, pass: pass});
-        setStorage('supervisors', sups);
-        document.getElementById('newSupId').value = '';
-        document.getElementById('newSupPass').value = '';
+    function deleteAttendanceLog(idx) {
+        let logs = getStorage('attendanceLogs', []);
+        logs.splice(idx, 1);
+        setStorage('attendanceLogs', logs);
         loadAdminData();
     }
 
     function loadAdminData() {
         let labs = getStorage('labours', []);
         let logs = getStorage('attendanceLogs', []);
-        let sups = getStorage('supervisors', []);
-
-        // Update Stats
+        let sups = getStorage('supervisors', [{id:'lalshah', pass:'1234'}]);
+        let reqs = getStorage('attendanceReqs', []);
+        
         let todayStr = new Date().toISOString().split('T')[0];
         let todayLogs = logs.filter(l => l.date === todayStr);
-        let todayPresent = todayLogs.reduce((sum, l) => sum + (l.presentCount || 0), 0);
-        let totalRegistered = labs.length;
-        
-        document.getElementById('statTotalLabours').innerText = totalRegistered;
-        document.getElementById('statTodayPresent').innerText = todayPresent;
-        document.getElementById('statTodayAbsent').innerText = totalRegistered > todayPresent ? (totalRegistered - todayPresent) : 0;
+        document.getElementById('statTotalLabours').innerText = labs.length;
+        document.getElementById('statTodayPresent').innerText = todayLogs.reduce((sum, l) => sum + (l.presentCount || 0), 0);
 
-        // Render Labour Table
-        let lHtml = '<table><tr><th>ID</th><th>Labour Name</th><th>Admin Actions</th></tr>';
-        labs.forEach(l => {
-            lHtml += `<tr><td>${l.empId}</td><td><b>${l.name}</b></td>
-                      <td><button type="button" class="btn-danger" onclick="deleteLabour('${l.empId}')">Remove</button></td></tr>`;
+        // Sups Table
+        let sHtml = '<table><tr><th>ID</th><th>Pass</th><th>Act</th></tr>';
+        sups.forEach(s => { sHtml += `<tr><td>${s.id}</td><td>${s.pass}</td><td><button class="btn-danger" onclick="deleteSupervisor('${s.id}')">X</button></td></tr>`; });
+        document.getElementById('supTableBox').innerHTML = sHtml + '</table>';
+
+        // Labs Table
+        let lHtml = '<table><tr><th>ID</th><th>Name</th><th>Act</th></tr>';
+        labs.forEach(l => { lHtml += `<tr><td>${l.empId}</td><td>${l.name}</td><td><button class="btn-danger" onclick="deleteLabour('${l.empId}')">X</button></td></tr>`; });
+        document.getElementById('labTableBox').innerHTML = lHtml + '</table>';
+
+        // Requests Table
+        let reqHtml = '<table><tr><th>Date</th><th>Sup</th><th>Labour</th><th>Reason</th><th>Status/Act</th></tr>';
+        reqs.slice().reverse().forEach(r => {
+            let acts = '';
+            if(r.status === 'Pending') {
+                acts = `<button class="btn-success" onclick="approveReq('${r.reqId}')">✔</button> 
+                        <button class="btn-danger" onclick="rejectReq('${r.reqId}')">✖</button>`;
+            } else {
+                acts = `<span class="badge-${r.status.toLowerCase()}">${r.status}</span>`;
+            }
+            reqHtml += `<tr><td>${r.date}</td><td>${r.sup}</td><td>${r.empName}</td><td>${r.reason}</td><td>${acts}</td></tr>`;
         });
-        lHtml += '</table>';
-        document.getElementById('labTableBox').innerHTML = labs.length ? lHtml : '<p>Master List Khali Hai.</p>';
+        document.getElementById('adminReqTableBox').innerHTML = reqs.length ? reqHtml + '</table>' : '<p>No pending requests.</p>';
 
-        // Render Reports
-        let rHtml = '<table><tr><th>Date & Site</th><th>Supervisor</th><th>Present / Total</th><th>Share</th></tr>';
+        // Logs Table (With Search)
+        let searchQ = document.getElementById('searchLog').value.toLowerCase();
+        let rHtml = '<table><tr><th>Date & Site</th><th>Sup ID</th><th>P/T</th><th>Photo</th><th>Admin</th></tr>';
         logs.forEach((l, idx) => {
-            rHtml += `<tr>
-                <td><b>${l.date}</b><br><small>${l.site}</small></td>
-                <td>${l.sup}</td>
-                <td><b>${l.presentCount}</b> / ${l.totalCount}</td>
-                <td><button type="button" class="btn-wa" onclick="shareWhatsApp(${idx})">WhatsApp</button></td>
-            </tr>`;
+            if(l.date.toLowerCase().includes(searchQ) || l.site.toLowerCase().includes(searchQ) || l.sup.toLowerCase().includes(searchQ)) {
+                let pBtn = l.photo ? `<button class="btn-photo" onclick="viewPhoto('${idx}')">🖼️ View</button>` : 'N/A';
+                rHtml += `<tr><td><b>${l.date}</b><br><small>${l.site}</small></td><td>${l.sup}</td>
+                          <td><b>${l.presentCount}</b> / ${l.totalCount}</td><td>${pBtn}</td>
+                          <td><button class="btn-danger" onclick="deleteAttendanceLog(${idx})">Del</button></td></tr>`;
+            }
         });
-        rHtml += '</table>';
-        document.getElementById('reportTableBox').innerHTML = logs.length ? rHtml : '<p>Koi Attendance Record Nahi Hai.</p>';
+        document.getElementById('reportTableBox').innerHTML = rHtml + '</table>';
     }
 
-    // --- SUPERVISOR FUNCTIONS ---
+    function approveReq(reqId) {
+        let reqs = getStorage('attendanceReqs', []);
+        let logs = getStorage('attendanceLogs', []);
+        let req = reqs.find(r => r.reqId == reqId);
+        if(req) {
+            req.status = 'Approved';
+            // Find that date's log for this supervisor
+            let targetLog = logs.find(l => l.date === req.date && l.sup === req.sup);
+            if(targetLog) {
+                let det = targetLog.details.find(d => d.empId === req.empId);
+                if(det && det.status !== 'Present') {
+                    det.status = 'Present';
+                    targetLog.presentCount++;
+                } else if (!det) {
+                    targetLog.details.push({empId: req.empId, name: req.empName, status: 'Present'});
+                    targetLog.presentCount++;
+                    targetLog.totalCount++;
+                }
+            }
+            setStorage('attendanceReqs', reqs);
+            setStorage('attendanceLogs', logs);
+            loadAdminData();
+            alert("Attendance Updated to Present!");
+        }
+    }
+
+    function rejectReq(reqId) {
+        let reqs = getStorage('attendanceReqs', []);
+        let req = reqs.find(r => r.reqId == reqId);
+        if(req) { req.status = 'Rejected'; setStorage('attendanceReqs', reqs); loadAdminData(); }
+    }
+
+    function viewPhoto(idx) {
+        let logs = getStorage('attendanceLogs', []);
+        if(logs[idx] && logs[idx].photo) {
+            let win = window.open();
+            win.document.write(`<body style="margin:0;background:#222;display:flex;justify-content:center;align-items:center;height:100vh;"><img src="${logs[idx].photo}" style="max-width:90%;max-height:90%;border-radius:10px;"></body>`);
+        }
+    }
+
+    // ================= SUPERVISOR LOGIC =================
     function loadSupervisorChecklist() {
         let labs = getStorage('labours', []);
         let box = document.getElementById('checklistContainer');
-        if(labs.length === 0) {
-            box.innerHTML = '<p style="color:red;">Admin ne abhi tak koi labour add nahi kiya hai.</p>';
-            return;
-        }
+        let sel = document.getElementById('reqLabour');
+        sel.innerHTML = '<option value="">-- Select Labour --</option>';
+        if(labs.length === 0) { box.innerHTML = '<p>No labours added.</p>'; return; }
+        
         let html = '<table>';
         labs.forEach(l => {
-            html += `<tr>
-                <td style="width:30px;"><input type="checkbox" class="chkBox" data-empid="${l.empId}" data-name="${l.name}"></td>
-                <td style="text-align:left;"><b>${l.name}</b> (${l.empId})</td>
-            </tr>`;
+            html += `<tr><td style="width:30px;"><input type="checkbox" class="chkBox" data-empid="${l.empId}" data-name="${l.name}"></td>
+                         <td style="text-align:left;"><b>${l.name}</b> (${l.empId})</td></tr>`;
+            sel.innerHTML += `<option value="${l.empId}|${l.name}">${l.name} (${l.empId})</option>`;
         });
-        html += '</table>';
-        box.innerHTML = html;
+        box.innerHTML = html + '</table>';
+    }
+
+    function processImage(event) {
+        let file = event.target.files[0];
+        if(!file) return;
+        document.getElementById('photoStatus').innerHTML = "⏳ Compressing...";
+        let reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = function(e) {
+            let img = new Image();
+            img.src = e.target.result;
+            img.onload = function() {
+                let canvas = document.createElement('canvas');
+                let scale = Math.min(800 / img.width, 1);
+                canvas.width = img.width * scale; canvas.height = img.height * scale;
+                canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+                compressedImageBase64 = canvas.toDataURL('image/jpeg', 0.5);
+                document.getElementById('photoStatus').innerHTML = "✅ Photo Ready!";
+            }
+        }
     }
 
     function submitAttendance() {
         let date = document.getElementById('attendanceDate').value;
         let site = document.getElementById('siteNameInput').value.trim();
-        let labs = getStorage('labours', []);
-
+        let logs = getStorage('attendanceLogs', []);
+        
         if(!date || !site) { alert('Date aur Site Name zaruri hai!'); return; }
 
-        let presentCount = 0;
-        let details = [];
+        // Block Duplicate Entry for same Date & Site
+        let exists = logs.find(l => l.date === date && l.site.toLowerCase() === site.toLowerCase());
+        if(exists) { alert('⚠️ Is Site ki attendance aaj ke liye pehle hi submit ho chuki hai. Duplicate allowed nahi hai.'); return; }
+
+        let presentCount = 0; let details = []; let absentNames = [];
         document.querySelectorAll('.chkBox').forEach(cb => {
-            if(cb.checked) presentCount++;
-            details.push({ empId: cb.getAttribute('data-empid'), status: cb.checked ? 'Present' : 'Absent' });
+            if(cb.checked) { presentCount++; details.push({ empId: cb.getAttribute('data-empid'), name: cb.getAttribute('data-name'), status: 'Present' }); } 
+            else { absentNames.push(cb.getAttribute('data-name')); details.push({ empId: cb.getAttribute('data-empid'), name: cb.getAttribute('data-name'), status: 'Absent' }); }
         });
 
-        let logs = getStorage('attendanceLogs', []);
-        logs.unshift({ date: date, site: site, sup: activeUser.id, presentCount: presentCount, totalCount: labs.length });
-        setStorage('attendanceLogs', logs);
+        let logEntry = { date: date, site: site, sup: activeUser.id, presentCount: presentCount, totalCount: details.length, photo: compressedImageBase64, details: details };
+        logs.unshift(logEntry); setStorage('attendanceLogs', logs);
 
-        alert('Attendance Successfully Submit Ho Gayi!');
-        document.getElementById('siteNameInput').value = '';
-        document.querySelectorAll('.chkBox').forEach(cb => cb.checked = false);
+        // Drive Sync
+        let cloudUrl = getStorage('cloudUrl', '');
+        if(cloudUrl !== '') {
+            fetch(cloudUrl, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(logEntry) }).catch(e=>console.log(e));
+        }
+
+        // WhatsApp Share Prompt
+        let msg = `*MS ELECTRICALS*\n📅 Date: ${date}\n🏗️ Site: ${site}\n👤 Sup: ${activeUser.id}\n✅ Present: ${presentCount}/${details.length}\n❌ Absent: ${absentNames.join(', ') || 'None'}`;
+        if(confirm("✅ Saved! WhatsApp par share karna chahte hain?")) {
+            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
+        }
+        location.reload();
     }
 
-    function shareWhatsApp(idx) {
-        let logs = getStorage('attendanceLogs', []);
-        let data = logs[idx];
-        if(!data) return;
-        let msg = `*Site Attendance Report*\n📅 Date: ${data.date}\n🏗️ Site: ${data.site}\n👤 Supervisor: ${data.sup}\n📊 Attendance: ${data.presentCount}/${data.totalCount} Present`;
-        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
+    function sendRequest() {
+        let rDate = document.getElementById('reqDate').value;
+        let rLab = document.getElementById('reqLabour').value;
+        let rRea = document.getElementById('reqReason').value;
+        if(!rDate || !rLab) { alert('Date aur Labour select karein!'); return; }
+        
+        let [empId, empName] = rLab.split('|');
+        let reqs = getStorage('attendanceReqs', []);
+        reqs.push({ reqId: Date.now(), date: rDate, sup: activeUser.id, empId: empId, empName: empName, reason: rRea, status: 'Pending' });
+        setStorage('attendanceReqs', reqs);
+        
+        alert("Request Admin ko bhej di gayi hai!");
+        document.getElementById('reqReason').value = '';
+        loadSupervisorRequests();
+    }
+
+    function loadSupervisorRequests() {
+        let reqs = getStorage('attendanceReqs', []).filter(r => r.sup === activeUser.id);
+        let html = '<table><tr><th>Date</th><th>Labour</th><th>Status</th></tr>';
+        reqs.slice().reverse().forEach(r => { html += `<tr><td>${r.date}</td><td>${r.empName}</td><td><span class="badge-${r.status.toLowerCase()}">${r.status}</span></td></tr>`; });
+        document.getElementById('myRequestsBox').innerHTML = reqs.length ? html + '</table>' : '<p>Apki koi requests nahi hain.</p>';
     }
 
     function exportMonthlyExcel() {
         let logs = getStorage('attendanceLogs', []);
-        if(logs.length === 0) { alert('Download karne ke liye koi data nahi hai!'); return; }
-        
-        let csvContent = "Date,Site Name,Supervisor,Total Present,Total Registered\n";
-        logs.forEach(l => { csvContent += `"${l.date}","${l.site}","${l.sup}","${l.presentCount}","${l.totalCount}"\n`; });
-        
-        let blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        let link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = `Attendance_Report.csv`;
-        link.click();
+        let csv = "Date,Site Name,Supervisor,Total Present,Total Registered\n";
+        logs.forEach(l => { csv += `"${l.date}","${l.site}","${l.sup}","${l.presentCount}","${l.totalCount}"\n`; });
+        let link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' })); link.download = `MS_Electricals_Report.csv`; link.click();
     }
 </script>
 </body>
