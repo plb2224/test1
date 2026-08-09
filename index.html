@@ -150,7 +150,7 @@
     function handleLogin() {
         let id = document.getElementById('uid').value.trim().toLowerCase();
         let pass = document.getElementById('upass').value.trim();
-        if(id === 'admin' && pass === 'admin123') {
+        if(id === 'admin' && pass === 'Admin@123') {
             activeUser = { role: 'admin', id: 'admin' };
             document.getElementById('loginSection').classList.add('hidden');
             document.getElementById('adminPanel').classList.remove('hidden');
