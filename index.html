@@ -23,6 +23,8 @@
         .btn-danger { background: #c0392b; width: auto; padding: 5px 10px; font-size: 12px; }
         .btn-warning { background: #d35400; width: auto; padding: 5px 10px; font-size: 12px; color: white; }
         .btn-success { background: #27ae60; width: auto; padding: 5px 10px; font-size: 12px; }
+        .btn-whatsapp { background: #25D366; color: white; font-weight: bold; border: none; padding: 10px; border-radius: 4px; cursor: pointer; width: 100%; margin-top: 8px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-whatsapp:hover { background: #1ebe5d; }
         .card { background: #fafafa; padding: 15px; border: 1px solid #e1e1e1; border-radius: 6px; margin-bottom: 15px; }
     </style>
 </head>
@@ -116,7 +118,7 @@
         </div>
 
         <div class="card">
-            <h3>Daily Attendance Entry</h3>
+            <h3>Daily Attendance Entry (Verify Name & ID)</h3>
             <div class="form-group">
                 <label>Date:</label>
                 <input type="date" id="attendanceDate">
@@ -126,14 +128,22 @@
                 <input type="text" id="siteNameInput" placeholder="e.g., Site Phase 1">
             </div>
             <div class="form-group">
-                <label>Group Selfie / Photo:</label>
-                <input type="file" id="groupPhoto" accept="image/*" capture="environment">
+                <label>Group Selfie / Site Photo:</label>
+                <input type="file" id="groupPhoto" accept="image/*" capture="environment" onchange="previewPhoto(event)">
+                <div id="photoPreviewBox" style="margin-top:8px;"></div>
             </div>
             <div class="form-group">
-                <label>Checklist (Tick for Present):</label>
-                <div id="checklistContainer" style="max-height:200px; overflow-y:auto; border:1px solid #ccc; padding:8px; background:#fff;"></div>
+                <label>Checklist (Tick for Present - Name & ID verified):</label>
+                <div id="checklistContainer" style="max-height:220px; overflow-y:auto; border:1px solid #ccc; padding:8px; background:#fff;"></div>
             </div>
-            <button type="button" onclick="submitAttendance()">Submit Attendance</button>
+            <button type="button" onclick="verifyAndSubmitAttendance()">🔍 Verify & Submit Attendance</button>
+            
+            <!-- WhatsApp Instant Share Button -->
+            <div id="whatsappShareBox" class="hidden" style="margin-top:10px;">
+                <button type="button" class="btn-whatsapp" onclick="shareLastAttendanceOnWhatsApp()">
+                    📱 WhatsApp Par Report & Photo Share Karein
+                </button>
+            </div>
         </div>
 
         <div class="card">
@@ -143,7 +153,7 @@
                 <input type="date" id="reqDate">
             </div>
             <div class="form-group">
-                <label>Labour:</label>
+                <label>Labour (Name & ID):</label>
                 <select id="reqLabour"></select>
             </div>
             <div class="form-group">
@@ -165,8 +175,9 @@
     }
 
     let activeUser = null;
+    let base64PhotoString = "";
+    let lastSubmittedLog = null;
 
-    // Auto-load cloud data quietly on start if URL is saved
     window.addEventListener('DOMContentLoaded', async () => {
         let cloudUrl = getStorage('cloudUrl', '');
         if (cloudUrl) {
@@ -266,7 +277,6 @@
         syncFromCloud();
     }
 
-    // Auto-sync function to push updates to Google Sheets instantly
     async function autoSyncToCloud() {
         let cloudUrl = getStorage('cloudUrl', '');
         if(!cloudUrl) return;
@@ -284,6 +294,38 @@
                 body: JSON.stringify(payload)
             });
         } catch(e) {}
+    }
+
+    // Handle Image Preview and compression for WhatsApp/Storage compatibility
+    function previewPhoto(event) {
+        let file = event.target.files[0];
+        if(!file) return;
+        let reader = new FileReader();
+        reader.onload = function(e) {
+            let img = new Image();
+            img.onload = function() {
+                let canvas = document.createElement('canvas');
+                let ctx = canvas.getContext('2d');
+                let MAX_WIDTH = 600;
+                let MAX_HEIGHT = 600;
+                let width = img.width;
+                let height = img.height;
+
+                if (width > height) {
+                    if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+                } else {
+                    if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
+                }
+                canvas.width = width;
+                canvas.height = height;
+                ctx.drawImage(img, 0, 0, width, height);
+                base64PhotoString = canvas.toDataURL('image/jpeg', 0.7);
+                
+                document.getElementById('photoPreviewBox').innerHTML = `<img src="${base64PhotoString}" style="max-width:100px; max-height:100px; border-radius:4px; border:1px solid #ccc;"> <span style="font-size:12px; color:green;">✅ Photo Attached</span>`;
+            }
+            img.src = e.target.result;
+        }
+        reader.readAsDataURL(file);
     }
 
     async function addSupervisor() {
@@ -317,7 +359,7 @@
         if(!name || !empId) { alert("Name aur ID bharein!"); return; }
         
         let labs = getStorage('labours', []);
-        if(labs.some(l => l.empId === empId)) { alert("Labour ID already exists!"); return; }
+        if(labs.some(l => l.empId.toLowerCase() === empId.toLowerCase())) { alert("Labour ID already exists!"); return; }
         
         labs.push({empId: empId, name: name});
         setStorage('labours', labs);
@@ -330,7 +372,8 @@
     }
 
     async function deleteLabour(empId) {
-        let labs = getStorage('labours', []).filter(l => l.empId !== empId);
+        if(!confirm(`Kya aap labour ID (${empId}) ko delete karna chahte hain?`)) return;
+        let labs = getStorage('labours', []).filter(l => String(l.empId).trim() !== String(empId).trim());
         setStorage('labours', labs);
         await autoSyncToCloud();
         loadAdminData();
@@ -406,12 +449,13 @@
         let repBox = document.getElementById('reportTableBox');
         repBox.innerHTML = '';
         let repTable = document.createElement('table');
-        repTable.innerHTML = '<tr><th>Date</th><th>Site</th><th>Supervisor</th><th>Present/Total</th><th>Action</th></tr>';
+        repTable.innerHTML = '<tr><th>Date</th><th>Site</th><th>Supervisor</th><th>Present/Total</th><th>Photo</th><th>Action</th></tr>';
         
         logs.filter(l => !searchQ || l.date.toLowerCase().includes(searchQ) || l.site.toLowerCase().includes(searchQ)).slice().reverse().forEach((l, idx) => {
             let actualIdx = logs.length - 1 - idx;
             let tr = document.createElement('tr');
-            tr.innerHTML = `<td>${l.date}</td><td>${l.site}</td><td>${l.sup}</td><td>${l.presentCount} / ${l.totalCount}</td><td><button class="btn-danger" onclick="deleteAttendanceLog(${actualIdx})">Delete</button></td>`;
+            let photoCell = l.photo ? `<img src="${l.photo}" style="width:40px; height:40px; object-fit:cover; border-radius:4px;">` : 'No Photo';
+            tr.innerHTML = `<td>${l.date}</td><td>${l.site}</td><td>${l.sup}</td><td>${l.presentCount} / ${l.totalCount}</td><td>${photoCell}</td><td><button class="btn-danger" onclick="deleteAttendanceLog(${actualIdx})">Delete</button></td>`;
             repTable.appendChild(tr);
         });
         repBox.appendChild(repTable);
@@ -424,8 +468,8 @@
         
         labs.forEach(l => {
             let div = document.createElement('div');
-            div.style.cssText = "margin-bottom:5px;";
-            div.innerHTML = `<label style="font-weight:normal; display:inline-block;"><input type="checkbox" class="lab-chk" value="${l.empId}" style="width:auto; margin-right:8px;"> ${l.name} (${l.empId})</label>`;
+            div.style.cssText = "margin-bottom:6px; padding:4px; background:#f9f9f9; border-radius:4px; border:1px solid #eee;";
+            div.innerHTML = `<label style="font-weight:normal; display:flex; align-items:center; cursor:pointer;"><input type="checkbox" class="lab-chk" value="${l.empId}" style="width:18px; height:18px; margin-right:10px;"> <span style="font-weight:bold; color:#2c3e50; margin-right:8px;">[ID: ${l.empId}]</span> ${l.name}</label>`;
             container.appendChild(div);
         });
 
@@ -434,35 +478,91 @@
         labs.forEach(l => {
             let opt = document.createElement('option');
             opt.value = l.empId;
-            opt.innerText = `${l.name} (${l.empId})`;
+            opt.innerText = `[${l.empId}] ${l.name}`;
             reqLabSelect.appendChild(opt);
         });
     }
 
-    async function submitAttendance() {
+    function verifyAndSubmitAttendance() {
         let date = document.getElementById('attendanceDate').value;
         let site = document.getElementById('siteNameInput').value.trim();
         if(!date || !site) { alert("Date aur Site Name zaroori hai!"); return; }
 
         let checkboxes = document.querySelectorAll('.lab-chk:checked');
         let presentIds = Array.from(checkboxes).map(cb => cb.value);
-        let totalLabs = getStorage('labours', []).length;
+        presentIds = [...new Set(presentIds)];
 
+        if(presentIds.length === 0) {
+            alert("⚠️ Kam se kam ek labour select karein!");
+            return;
+        }
+
+        let labs = getStorage('labours', []);
+        let selectedDetails = presentIds.map(id => {
+            let l = labs.find(x => x.empId === id);
+            return l ? `- ${l.name} (ID: ${l.empId})` : `- ID: ${id}`;
+        }).join("\n");
+
+        let confirmMsg = `📋 Kripya verify karein (${presentIds.length} Labour Present):\n\nSite: ${site}\nDate: ${date}\n\nSelected Workers:\n${selectedDetails}\n\nKya aap yeh attendance submit karna chahte hain?`;
+
+        if(confirm(confirmMsg)) {
+            submitAttendanceFinal(date, site, presentIds);
+        }
+    }
+
+    async function submitAttendanceFinal(date, site, presentIds) {
+        let totalLabs = getStorage('labours', []).length;
         let logs = getStorage('attendanceLogs', []);
-        logs.push({
+        
+        let newLog = {
             date: date,
             site: site,
             sup: activeUser.id,
             presentCount: presentIds.length,
             totalCount: totalLabs,
-            presentList: presentIds
-        });
+            presentList: presentIds,
+            photo: base64PhotoString
+        };
+
+        logs.push(newLog);
+        lastSubmittedLog = newLog;
+
         setStorage('attendanceLogs', logs);
         await autoSyncToCloud();
         
-        alert("✅ Attendance Submitted & Synced!");
+        alert("✅ Attendance Successfully Submitted & Synced!");
+        
+        // Show WhatsApp share option
+        document.getElementById('whatsappShareBox').classList.remove('hidden');
+        
         document.getElementById('siteNameInput').value = '';
         document.querySelectorAll('.lab-chk').forEach(cb => cb.checked = false);
+        document.getElementById('groupPhoto').value = '';
+        document.getElementById('photoPreviewBox').innerHTML = '';
+        base64PhotoString = "";
+    }
+
+    function shareLastAttendanceOnWhatsApp() {
+        if (!lastSubmittedLog) {
+            alert("Pehle attendance submit karein!");
+            return;
+        }
+        let labs = getStorage('labours', []);
+        let presentNames = lastSubmittedLog.presentList.map(id => {
+            let l = labs.find(x => x.empId === id);
+            return l ? `${l.name} (${l.empId})` : id;
+        }).join(", ");
+
+        let msg = `*MS ELECTRICALS - SITE ATTENDANCE*%0A` +
+                  `📅 *Date:* ${lastSubmittedLog.date}%0A` +
+                  `🏗️ *Site:* ${lastSubmittedLog.site}%0A` +
+                  `👷 *Supervisor:* ${lastSubmittedLog.sup.toUpperCase()}%0A` +
+                  `✅ *Total Present:* ${lastSubmittedLog.presentCount} / ${lastSubmittedLog.totalCount}%0A%0A` +
+                  `👥 *Present Workers:*%0A${presentNames}%0A%0A` +
+                  `_Sent via MS Electricals App_`;
+
+        let whatsappUrl = `https://api.whatsapp.com/send?text=${msg}`;
+        window.open(whatsappUrl, '_blank');
     }
 
     async function sendRequest() {
@@ -479,7 +579,7 @@
             date: date,
             sup: activeUser.id,
             empId: empId,
-            empName: labObj ? labObj.name : empId,
+            empName: labObj ? `${labObj.name} (ID: ${labObj.empId})` : empId,
             reason: reason,
             status: 'Pending'
         });
