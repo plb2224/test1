@@ -296,7 +296,6 @@
         } catch(e) {}
     }
 
-    // Handle Image Preview and compression for WhatsApp/Storage compatibility
     function previewPhoto(event) {
         let file = event.target.files[0];
         if(!file) return;
@@ -398,7 +397,8 @@
         a.href = url; a.download = "Attendance_Report.csv"; a.click();
     }
 
-    function loadAdminData() {
+    async function loadAdminData() {
+        await syncFromCloudSilent(); // Auto refresh before showing reports
         let labs = getStorage('labours', []);
         let logs = getStorage('attendanceLogs', []);
         let sups = getStorage('supervisors', []);
@@ -454,7 +454,8 @@
         logs.filter(l => !searchQ || l.date.toLowerCase().includes(searchQ) || l.site.toLowerCase().includes(searchQ)).slice().reverse().forEach((l, idx) => {
             let actualIdx = logs.length - 1 - idx;
             let tr = document.createElement('tr');
-            let photoCell = l.photo ? `<img src="${l.photo}" style="width:40px; height:40px; object-fit:cover; border-radius:4px;">` : 'No Photo';
+            // Check if photo is Drive URL or base64
+            let photoCell = l.photo ? `<a href="${l.photo}" target="_blank"><img src="${l.photo.startsWith('http') ? l.photo : l.photo}" style="width:40px; height:40px; object-fit:cover; border-radius:4px;"></a>` : 'No Photo';
             tr.innerHTML = `<td>${l.date}</td><td>${l.site}</td><td>${l.sup}</td><td>${l.presentCount} / ${l.totalCount}</td><td>${photoCell}</td><td><button class="btn-danger" onclick="deleteAttendanceLog(${actualIdx})">Delete</button></td>`;
             repTable.appendChild(tr);
         });
@@ -499,7 +500,7 @@
 
         let labs = getStorage('labours', []);
         let selectedDetails = presentIds.map(id => {
-            let l = labs.find(x => x.empId === id);
+            let l = labs.find(x => String(x.empId) === String(id));
             return l ? `- ${l.name} (ID: ${l.empId})` : `- ID: ${id}`;
         }).join("\n");
 
@@ -530,9 +531,8 @@
         setStorage('attendanceLogs', logs);
         await autoSyncToCloud();
         
-        alert("✅ Attendance Successfully Submitted & Synced!");
+        alert("✅ Attendance Successfully Submitted & Synced! (Photo Drive par upload ho rahi hai)");
         
-        // Show WhatsApp share option
         document.getElementById('whatsappShareBox').classList.remove('hidden');
         
         document.getElementById('siteNameInput').value = '';
@@ -549,8 +549,8 @@
         }
         let labs = getStorage('labours', []);
         let presentNames = lastSubmittedLog.presentList.map(id => {
-            let l = labs.find(x => x.empId === id);
-            return l ? `${l.name} (${l.empId})` : id;
+            let l = labs.find(x => String(x.empId) === String(id));
+            return l ? `${l.name} (${l.empId})` : `ID: ${id}`;
         }).join(", ");
 
         let msg = `*MS ELECTRICALS - SITE ATTENDANCE*%0A` +
@@ -572,7 +572,7 @@
         if(!date || !reason) { alert("Date aur Reason bharein!"); return; }
 
         let labs = getStorage('labours', []);
-        let labObj = labs.find(l => l.empId === empId);
+        let labObj = labs.find(l => String(l.empId) === String(empId));
         let reqs = getStorage('attendanceReqs', []);
 
         reqs.push({
