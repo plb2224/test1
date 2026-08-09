@@ -64,6 +64,7 @@
             </div>
             <button type="button" onclick="handleLogin()">Login Karein</button>
             <div style="margin-top:15px; text-align:center;">
+                <button type="button" class="btn-success" style="width:100%; padding:8px; margin-bottom:8px;" onclick="syncFromCloud()">🔄 Cloud se Data Sync Karein</button>
                 <button type="button" class="btn-warning" style="width:100%; padding:8px;" onclick="resetSystemData()">🔄 System Data Reset</button>
             </div>
         </div>
@@ -73,7 +74,10 @@
     <div id="adminPanel" class="hidden">
         <div style="display:flex; justify-content:space-between; align-items:center;">
             <h2>👑 Admin Master Panel</h2>
-            <button type="button" class="btn-danger" style="padding:8px 15px;" onclick="doLogout()">Logout</button>
+            <div>
+                <button type="button" class="btn-success" style="padding:8px 12px;" onclick="syncFromCloud()">🔄 Sync Cloud</button>
+                <button type="button" class="btn-danger" style="padding:8px 12px;" onclick="doLogout()">Logout</button>
+            </div>
         </div>
         
         <div class="stats-grid">
@@ -135,7 +139,10 @@
     <div id="supervisorPanel" class="hidden">
         <div style="display:flex; justify-content:space-between; align-items:center;">
             <h2 id="supWelcome">Supervisor</h2>
-            <button type="button" class="btn-danger" style="padding:8px 15px;" onclick="doLogout()">Logout</button>
+            <div>
+                <button type="button" class="btn-success" style="padding:8px 12px;" onclick="syncFromCloud()">🔄 Refresh</button>
+                <button type="button" class="btn-danger" style="padding:8px 12px;" onclick="doLogout()">Logout</button>
+            </div>
         </div>
 
         <div class="card" id="attendanceFormCard">
@@ -195,7 +202,27 @@
     let activeUser = null;
     let compressedImageBase64 = "";
 
-    function handleLogin() {
+    // Automatic Cloud Sync Function (Fetches Labours & Supervisors from Google Sheet)
+    async function syncFromCloud() {
+        let cloudUrl = getStorage('cloudUrl', '');
+        if(!cloudUrl) {
+            alert("⚠️ Pehle Admin Panel mein Cloud URL daalkar save karein!");
+            return;
+        }
+        try {
+            let res = await fetch(cloudUrl + "?action=getAllData");
+            let data = await res.json();
+            if(data.supervisors) setStorage('supervisors', data.supervisors);
+            if(data.labours) setStorage('labours', data.labours);
+            alert("✅ Cloud se saara data successfully sync ho gaya!");
+            if(activeUser && activeUser.role === 'admin') loadAdminData();
+            if(activeUser && activeUser.role === 'supervisor') loadSupervisorChecklist();
+        } catch(e) {
+            alert("❌ Sync Failed! URL check karein.");
+        }
+    }
+
+    async function handleLogin() {
         let id = document.getElementById('uid').value.trim().toLowerCase();
         let pass = document.getElementById('upass').value.trim();
 
@@ -203,6 +230,9 @@
             alert('❌ Kripya User ID aur Password dono daalein!');
             return;
         }
+
+        // Background mein automatically cloud se data pull karne ki koshish
+        await syncFromCloudSilent();
 
         if (id === 'admin' && pass === 'admin123') {
             activeUser = { role: 'admin', id: 'admin' };
@@ -237,6 +267,17 @@
         }
     }
 
+    async function syncFromCloudSilent() {
+        let cloudUrl = getStorage('cloudUrl', '');
+        if(!cloudUrl) return;
+        try {
+            let res = await fetch(cloudUrl + "?action=getAllData");
+            let data = await res.json();
+            if(data.supervisors && data.supervisors.length > 0) setStorage('supervisors', data.supervisors);
+            if(data.labours && data.labours.length > 0) setStorage('labours', data.labours);
+        } catch(e) {}
+    }
+
     function doLogout() { activeUser = null; location.reload(); }
 
     function resetSystemData() {
@@ -248,8 +289,10 @@
     }
 
     function saveCloudUrl() {
-        setStorage('cloudUrl', document.getElementById('cloudUrlInput').value.trim());
+        let url = document.getElementById('cloudUrlInput').value.trim();
+        setStorage('cloudUrl', url);
         alert("Cloud URL Saved!");
+        syncFromCloud();
     }
 
     async function addSupervisor() {
@@ -275,13 +318,13 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ type: 'supervisor', supId: id, supPass: pass })
                 });
-            } catch(e) { console.log("Cloud sync error"); }
+            } catch(e) {}
         }
 
         document.getElementById('newSupId').value = '';
         document.getElementById('newSupPass').value = '';
         loadAdminData();
-        alert("✅ Supervisor Successfully Added & Synced!");
+        alert("✅ Supervisor Added & Synced to Cloud!");
     }
 
     function deleteSupervisor(id) {
@@ -293,16 +336,31 @@
         }
     }
 
-    function addLabour() {
+    async function addLabour() {
         let name = document.getElementById('labName').value.trim();
         let empId = document.getElementById('labEmpId').value.trim();
-        if(!name || !empId) return;
+        if(!name || !empId) { alert("Name aur ID dono bharein!"); return; }
+        
         let labs = getStorage('labours', []);
         labs.push({empId: empId, name: name});
         setStorage('labours', labs);
+        
+        let cloudUrl = getStorage('cloudUrl', '');
+        if(cloudUrl) {
+            try {
+                await fetch(cloudUrl, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type: 'labour', empId: empId, name: name })
+                });
+            } catch(e) {}
+        }
+
         document.getElementById('labName').value = '';
         document.getElementById('labEmpId').value = '';
         loadAdminData();
+        alert("✅ Labour Added & Synced to Cloud!");
     }
 
     function deleteLabour(empId) {
@@ -486,7 +544,7 @@
         let sel = document.getElementById('reqLabour');
         sel.innerHTML = '<option value="">-- Select Labour --</option>';
         box.innerHTML = '';
-        if(labs.length === 0) { box.innerHTML = '<p>No labours added.</p>'; return; }
+        if(labs.length === 0) { box.innerHTML = '<p>No labours added. Please click Refresh or check Cloud URL.</p>'; return; }
         
         let table = document.createElement('table');
         labs.forEach(l => {
