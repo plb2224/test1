@@ -102,22 +102,22 @@
 
         <div style="display:flex; gap:20px; flex-wrap:wrap;">
             <div class="card" style="flex:1; min-width:300px;">
-                <h3>Add / Remove Supervisor (Up to 10+)</h3>
-                <div style="display:flex; gap:5px;" class="flex-row">
-                    <input type="text" id="newSupId" placeholder="Sup ID (e.g. sup1)">
+                <h3>👑 Manage Supervisors (Add/Remove)</h3>
+                <div style="display:flex; gap:5px; margin-bottom:10px;" class="flex-row">
+                    <input type="text" id="newSupId" placeholder="Supervisor ID">
                     <input type="password" id="newSupPass" placeholder="Password">
                     <button type="button" class="btn-success" onclick="addSupervisor()">Add</button>
                 </div>
-                <div id="supTableBox"></div>
+                <div id="supTableBox" style="max-height:200px; overflow-y:auto;"></div>
             </div>
             <div class="card" style="flex:1; min-width:300px;">
-                <h3>Add / Remove Labour</h3>
-                <div style="display:flex; gap:5px;" class="flex-row">
+                <h3>👷 Add / Remove Labour</h3>
+                <div style="display:flex; gap:5px; margin-bottom:10px;" class="flex-row">
                     <input type="text" id="labName" placeholder="Name">
                     <input type="text" id="labEmpId" placeholder="ID (L01)">
                     <button type="button" class="btn-success" onclick="addLabour()">Add</button>
                 </div>
-                <div id="labTableBox"></div>
+                <div id="labTableBox" style="max-height:200px; overflow-y:auto;"></div>
             </div>
         </div>
 
@@ -214,7 +214,7 @@
             return;
         }
 
-        // 2. Default & Dynamic Supervisors List
+        // 2. Default + Dynamic Supervisors List from LocalStorage / Cloud Backup
         let defaultSupervisors = [
             { id: 'supervisor1', pass: 'pass123' },
             { id: 'supervisor2', pass: 'pass456' },
@@ -241,9 +241,9 @@
 
     function doLogout() { activeUser = null; location.reload(); }
     function resetSystemData() {
-        if(confirm("Dhyan Dein! Saara local data delete ho jayega. Continue?")) {
+        if(confirm("Dhyan Dein! Saara local data reset ho jayega. Continue?")) {
             localStorage.clear();
-            alert("System Refresh Done!");
+            alert("System Reset Done!");
             location.reload();
         }
     }
@@ -253,12 +253,15 @@
     }
 
     function addSupervisor() {
-        let id = document.getElementById('newSupId').value.trim();
+        let id = document.getElementById('newSupId').value.trim().toLowerCase();
         let pass = document.getElementById('newSupPass').value.trim();
-        if(!id || !pass) { alert("ID aur Password dono bharein!"); return; }
+        if(!id || !pass) { alert("Supervisor ID aur Password dono bharein!"); return; }
         
         let sups = getStorage('supervisors', []);
-        if(sups.find(s => s.id.toLowerCase() === id.toLowerCase())) { alert("Yeh ID pehle se mojood hai!"); return; }
+        if(sups.find(s => s.id === id) || ['supervisor1', 'supervisor2', 'siteincharge'].find(s => s === id)) {
+            alert("Yeh ID pehle se mojood hai!"); 
+            return;
+        }
         
         sups.push({ id: id, pass: pass });
         setStorage('supervisors', sups);
@@ -332,7 +335,6 @@
         let sTable = document.createElement('table');
         sTable.innerHTML = '<tr><th>ID</th><th>Password</th><th>Act</th></tr>';
         
-        // Show default + custom supervisors in admin list
         let defaultSupList = [
             { id: 'supervisor1', pass: 'pass123' },
             { id: 'supervisor2', pass: 'pass456' },
@@ -483,7 +485,8 @@
             td1.appendChild(chk);
             let td2 = document.createElement('td'); td2.style.textAlign = 'left';
             td2.innerHTML = `<b>${l.name}</b> (${l.empId})`;
-            tr.appendChild(td1); tr.appendChild(td2);
+            tr.appendChild(td1); td2.appendChild(td2); // corrected below
+            tr.appendChild(td2);
             table.appendChild(tr);
             
             let opt = document.createElement('option');
@@ -547,7 +550,6 @@
         };
 
         let logs = getStorage('attendanceLogs', []);
-        logs.logCount = (logs.logCount || 0) + 1;
         logs.push(payload);
         setStorage('attendanceLogs', logs);
 
@@ -581,7 +583,7 @@
         let reqs = getStorage('attendanceReqs', []);
         reqs.push({ reqId: Date.now(), date: reqDate, sup: activeUser.id, empId: empId, empName: empName, reason: reqReason, status: 'Pending' });
         setStorage('attendanceReqs', reqs);
-        alert("Request Sent to Admin! Admin approve karenge tabhi add hoga.");
+        alert("Request Sent to Admin!");
         document.getElementById('reqReason').value = "";
         loadSupervisorRequests();
     }
