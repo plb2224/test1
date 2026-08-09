@@ -274,7 +274,6 @@
         syncFromCloud();
     }
 
-    // Push data to cloud automatically (Two-way sync update)
     async function autoSyncToCloud() {
         let cloudUrl = getStorage('cloudUrl', '');
         if(!cloudUrl) return;
