@@ -196,36 +196,23 @@
         }
         try {
             let res = await fetch(cloudUrl + "?action=getAllData");
-            
             if (!res.ok) throw new Error('Network response status: ' + res.status);
             
             let textData = await res.text();
-            let data;
-            try {
-                data = JSON.parse(textData);
-            } catch(err) {
-                throw new Error("Server ne JSON ki jagah HTML/Text bheja hai. URL check karein.");
-            }
+            let data = JSON.parse(textData);
             
-            if(data.status === 'error') {
-                throw new Error("Script Error: " + data.message);
-            }
+            if(data.status === 'error') throw new Error("Script Error: " + data.message);
 
-            // Safe Sync: Only update local storage if cloud actually has data, preventing data wipeout on empty sheets
-            if(data.supervisors && data.supervisors.length > 0) {
-                setStorage('supervisors', data.supervisors);
-            }
-            if(data.labours && data.labours.length > 0) {
-                setStorage('labours', data.labours);
-            }
+            if(data.supervisors) setStorage('supervisors', data.supervisors);
+            if(data.labours) setStorage('labours', data.labours);
             
             alert("✅ Cloud se saara data successfully sync ho gaya!");
             if(activeUser && activeUser.role === 'admin') loadAdminData();
             if(activeUser && activeUser.role === 'supervisor') loadSupervisorChecklist();
             
         } catch(e) {
-            console.error("Sync Error Details:", e);
-            alert("❌ Sync Failed! Asli Error: " + e.message);
+            console.error("Sync Error:", e);
+            alert("❌ Sync Failed! Error: " + e.message);
         }
     }
 
@@ -274,17 +261,18 @@
         try {
             let res = await fetch(cloudUrl + "?action=getAllData");
             let data = await res.json();
-            if(data.supervisors && data.supervisors.length > 0) setStorage('supervisors', data.supervisors);
-            if(data.labours && data.labours.length > 0) setStorage('labours', data.labours);
+            if(data.supervisors) setStorage('supervisors', data.supervisors);
+            if(data.labours) setStorage('labours', data.labours);
         } catch(e) {}
     }
 
     function doLogout() { activeUser = null; location.reload(); }
     function resetSystemData() { if(confirm("Reset all local data?")) { localStorage.clear(); location.reload(); } }
+    
     function saveCloudUrl() {
         let url = document.getElementById('cloudUrlInput').value.trim();
         if(!url.endsWith('/exec')) {
-            alert("⚠️ Warning: Google Web App URL aamtaur par '/exec' par khatam hota hai. Check kar lein.");
+            alert("⚠️ Warning: Google Web App URL aamtaur par '/exec' par khatam hota hai.");
         }
         setStorage('cloudUrl', url);
         alert("Cloud URL Saved!");
@@ -295,17 +283,21 @@
         let id = document.getElementById('newSupId').value.trim().toLowerCase();
         let pass = document.getElementById('newSupPass').value.trim();
         if(!id || !pass) return;
+        
         let sups = getStorage('supervisors', []);
         sups.push({ id: id, pass: pass });
         setStorage('supervisors', sups);
+        
         let cloudUrl = getStorage('cloudUrl', '');
         if(cloudUrl) {
-            try { fetch(cloudUrl, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'supervisor', supId: id, supPass: pass }) }); } catch(e) {}
+            try {
+                await fetch(`${cloudUrl}?action=addSupervisor&supId=${encodeURIComponent(id)}&supPass=${encodeURIComponent(pass)}`);
+            } catch(e) { console.error(e); }
         }
         document.getElementById('newSupId').value = '';
         document.getElementById('newSupPass').value = '';
         loadAdminData();
-        alert("✅ Supervisor Added!");
+        alert("✅ Supervisor Added & Saved to Sheet!");
     }
 
     function deleteSupervisor(id) {
@@ -318,17 +310,21 @@
         let name = document.getElementById('labName').value.trim();
         let empId = document.getElementById('labEmpId').value.trim();
         if(!name || !empId) return;
+        
         let labs = getStorage('labours', []);
         labs.push({empId: empId, name: name});
         setStorage('labours', labs);
+        
         let cloudUrl = getStorage('cloudUrl', '');
         if(cloudUrl) {
-            try { fetch(cloudUrl, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'labour', empId: empId, name: name }) }); } catch(e) {}
+            try {
+                await fetch(`${cloudUrl}?action=addLabour&empId=${encodeURIComponent(empId)}&name=${encodeURIComponent(name)}`);
+            } catch(e) { console.error(e); }
         }
         document.getElementById('labName').value = '';
         document.getElementById('labEmpId').value = '';
         loadAdminData();
-        alert("✅ Labour Added!");
+        alert("✅ Labour Added & Saved to Sheet!");
     }
 
     function deleteLabour(empId) {
@@ -372,7 +368,8 @@
         let defaultSupList = [{ id: 'supervisor1', pass: 'pass123' }, { id: 'supervisor2', pass: 'pass456' }, { id: 'siteincharge', pass: 'mseng2026' }];
         defaultSupList.concat(sups).forEach(s => {
             let tr = document.createElement('tr');
-            tr.innerHTML = `<td>${s.id}</td><td>${s.pass}</td><td>${['supervisor1','supervisor2','siteincharge'].includes(s.id)?'Default':'<button class="btn-danger" onclick="deleteSupervisor(\''+s.id+'\')">X</button>'}</td>`;
+            let isDefault = ['supervisor1','supervisor2','siteincharge'].includes(s.id);
+            tr.innerHTML = `<td>${s.id}</td><td>${s.pass}</td><td>${isDefault ? 'Default' : '<button class="btn-danger" onclick="deleteSupervisor(\''+s.id+'\')">X</button>'}</td>`;
             sTable.appendChild(tr);
         });
         supBox.appendChild(sTable);
@@ -395,7 +392,10 @@
             rTable.innerHTML = '<tr><th>Date</th><th>Sup</th><th>Labour</th><th>Reason</th><th>Action</th></tr>';
             reqs.slice().reverse().forEach(r => {
                 let tr = document.createElement('tr');
-                tr.innerHTML = `<td>${r.date}</td><td>${r.sup}</td><td>${r.empName}</td><td>${r.reason}</td><td>${r.status==='Pending'?'<button class="btn-success" onclick="approveReq('+r.reqId+')">✔</button> <button class="btn-danger" onclick="rejectReq('+r.reqId+')">✖</button>':'<span class="badge-'+r.status.toLowerCase()+'">'+r.status+'</span>'}</td>`;
+                let actCell = r.status === 'Pending' ? 
+                    `<button class="btn-success" onclick="approveReq(${r.reqId})">✔</button> <button class="btn-danger" onclick="rejectReq(${r.reqId})">✖</button>` : 
+                    `<span class="badge-${r.status.toLowerCase()}">${r.status}</span>`;
+                tr.innerHTML = `<td>${r.date}</td><td>${r.sup}</td><td>${r.empName}</td><td>${r.reason}</td><td>${actCell}</td>`;
                 rTable.appendChild(tr);
             });
             reqBox.appendChild(rTable);
@@ -409,7 +409,7 @@
         logs.forEach((l, idx) => {
             if(l.date.toLowerCase().includes(searchQ) || l.site.toLowerCase().includes(searchQ) || l.sup.toLowerCase().includes(searchQ)) {
                 let tr = document.createElement('tr');
-                tr.innerHTML = `<td><b>${l.date}</b><br><small>${l.site}</small></td><td>${l.sup}</td><td><b>${l.presentCount}</b>/${l.totalCount}</td><td>${l.photo?'<button class="btn-photo" onclick="viewPhoto('+idx+')">View</button>':'N/A'}</td><td><button class="btn-danger" onclick="deleteAttendanceLog('+idx+')">Del</button></td>`;
+                tr.innerHTML = `<td><b>${l.date}</b><br><small>${l.site}</small></td><td>${l.sup}</td><td><b>${l.presentCount}</b>/${l.totalCount}</td><td>${l.photo?'<button class="btn-photo" onclick="viewPhoto('+idx+')">View</button>':'N/A'}</td><td><button class="btn-danger" onclick="deleteAttendanceLog(${idx})">Del</button></td>`;
                 repTable.appendChild(tr);
             }
         });
@@ -506,8 +506,9 @@
             details.push({ empId: chk.dataset.empid, name: chk.dataset.name, status: status });
         });
 
-        document.getElementById('submitBtn').innerText = "⏳ Submitting...";
-        document.getElementById('submitBtn').disabled = true;
+        let subBtn = document.getElementById('submitBtn');
+        subBtn.innerText = "⏳ Submitting...";
+        subBtn.disabled = true;
 
         let payload = {
             type: 'attendance',
@@ -527,12 +528,7 @@
         let cloudUrl = getStorage('cloudUrl', '');
         if(cloudUrl) {
             try {
-                await fetch(cloudUrl, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
+                await fetch(`${cloudUrl}?action=submitAttendance&date=${encodeURIComponent(date)}&site=${encodeURIComponent(site)}&sup=${encodeURIComponent(activeUser.id)}&presentCount=${encodeURIComponent(presentCount)}&totalCount=${encodeURIComponent(chkBoxes.length)}`);
                 alert("✅ Attendance Saved & Sent to Google Sheet!");
             } catch (e) {
                 alert("⚠️ Saved locally, Cloud sync failed.");
@@ -541,8 +537,8 @@
             alert("✅ Attendance Saved Locally!");
         }
 
-        document.getElementById('submitBtn').innerText = "🚀 Submit Attendance";
-        document.getElementById('submitBtn').disabled = false;
+        subBtn.innerText = "🚀 Submit Attendance";
+        subBtn.disabled = false;
         compressedImageBase64 = "";
         document.getElementById('photoStatus').innerHTML = "Auto-Compress active.";
         document.getElementById('siteNameInput').value = "";
