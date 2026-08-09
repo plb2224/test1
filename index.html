@@ -197,7 +197,7 @@
     let activeUser = null;
     let compressedImageBase64 = "";
 
- function handleLogin(event) {
+    function handleLogin(event) {
         event.preventDefault(); 
         let id = document.getElementById('uid').value.trim().toLowerCase();
         let pass = document.getElementById('upass').value.trim();
@@ -212,32 +212,17 @@
             return;
         }
 
-        // ==========================================
-        // 2. APNE SUPERVISOR YAHAN SET KAREIN:
-        // ==========================================
+        // 2. Hardcoded Supervisors (Taki kisi bhi phone par bina error ke chalein)
         let defaultSupervisors = [
-            { id: 'supervisor1', pass: 'pass123' }, // Yahan apni marzi ka ID aur Password daalein
-            { id: 'supervisor2', pass: 'pass456' }, // Dusra supervisor banana ho toh yahan likhein
-            { id: 'siteincharge', pass: 'mseng2026' } // Jitne marzi utne add kar sakte hain
+            { id: 'supervisor1', pass: 'pass123' },
+            { id: 'supervisor2', pass: 'pass456' },
+            { id: 'siteincharge', pass: 'mseng2026' }
         ];
 
-        let found = defaultSupervisors.find(s => s.id.toLowerCase() === id && s.pass === pass);
+        let storedSupervisors = getStorage('supervisors', []);
+        let allSupervisors = [...defaultSupervisors, ...storedSupervisors];
 
-        if (found) {
-            activeUser = { role: 'supervisor', id: found.id };
-            document.getElementById('loginSection').classList.add('hidden');
-            document.getElementById('supervisorPanel').classList.remove('hidden');
-            document.getElementById('supWelcome').innerText = "Supervisor: " + found.id.toUpperCase();
-            document.getElementById('attendanceDate').value = new Date().toISOString().split('T')[0];
-            loadSupervisorChecklist();
-            loadSupervisorRequests();
-        } else {
-            alert('❌ Invalid ID or Password! Kripya sahi details check karein.');
-        }
-    }
-
-        let supervisors = getStorage('supervisors', []);
-        let found = supervisors.find(s => s.id.toLowerCase() === id && s.pass === pass);
+        let found = allSupervisors.find(s => s.id.toLowerCase() === id && s.pass === pass);
 
         if (found) {
             activeUser = { role: 'supervisor', id: found.id };
@@ -333,7 +318,6 @@
         document.getElementById('statTotalLabours').innerText = labs.length;
         document.getElementById('statTodayPresent').innerText = todayLogs.reduce((sum, l) => sum + (l.presentCount || 0), 0);
 
-        // Render Sups Table securely using textContent
         let supBox = document.getElementById('supTableBox');
         supBox.innerHTML = '';
         let sTable = document.createElement('table');
@@ -353,7 +337,6 @@
         });
         supBox.appendChild(sTable);
 
-        // Render Labs Table securely
         let labBox = document.getElementById('labTableBox');
         labBox.innerHTML = '';
         let lTable = document.createElement('table');
@@ -373,7 +356,6 @@
         });
         labBox.appendChild(lTable);
 
-        // Requests Table
         let reqBox = document.getElementById('adminReqTableBox');
         reqBox.innerHTML = reqs.length ? '' : '<p>No pending requests.</p>';
         if(reqs.length > 0) {
@@ -400,7 +382,6 @@
             reqBox.appendChild(rTable);
         }
 
-        // Reports Table with Search
         let searchQ = document.getElementById('searchLog').value.toLowerCase();
         let repBox = document.getElementById('reportTableBox');
         repBox.innerHTML = '';
