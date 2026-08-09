@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- CACHE CONTROL (Mobile update issue fix) -->
+    <!-- CACHE CONTROL: Mobile par purana design na dikhe -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     
-    <!-- PWA (Mobile App Install) Tags -->
+    <!-- PWA Install Support -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#1a365d">
     
@@ -40,9 +40,7 @@
         .stat-card { padding: 15px; border-radius: 8px; color: white; text-align: center; }
         .bg-blue { background: #3182ce; }
         .bg-green { background: #38a169; }
-        .bg-red { background: #e53e3e; }
         .login-card { max-width: 400px; margin: 30px auto; padding: 20px; border: 1px solid #cbd5e1; border-radius: 8px; background: #f8fafc; }
-        
         @media (max-width: 768px) {
             .flex-row { flex-direction: column; }
             .flex-row input, .flex-row select, .flex-row button { width: 100%; margin-bottom: 10px; }
@@ -80,7 +78,6 @@
             <button type="button" class="btn-danger" style="padding:8px 15px;" onclick="doLogout()">Logout</button>
         </div>
         
-        <!-- STATS -->
         <div class="stats-grid">
             <div class="stat-card bg-blue">
                 <h4 style="margin:0; font-size:13px; text-transform:uppercase;">Total Labours</h4>
@@ -92,7 +89,6 @@
             </div>
         </div>
 
-        <!-- DRIVE LINK -->
         <div class="card">
             <h3 style="margin:0 0 8px 0;">☁️ Google Cloud & Sheet Auto-Save Link</h3>
             <div style="display:flex; gap:6px;" class="flex-row">
@@ -101,13 +97,11 @@
             </div>
         </div>
 
-        <!-- PENDING REQUESTS -->
         <div class="card" style="border-left: 4px solid #dd6b20;">
             <h3>🔔 Attendance Correction Requests</h3>
             <div id="adminReqTableBox" style="overflow-x:auto;"></div>
         </div>
 
-        <!-- SUPERVISOR & LABOUR MASTERS -->
         <div style="display:flex; gap:20px; flex-wrap:wrap;">
             <div class="card" style="flex:1; min-width:300px;">
                 <h3>Add / Remove Supervisor</h3>
@@ -129,7 +123,6 @@
             </div>
         </div>
 
-        <!-- ATTENDANCE REPORTS -->
         <div class="card">
             <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
                 <h3>📋 Local Attendance Reports</h3>
@@ -147,7 +140,6 @@
             <button type="button" class="btn-danger" style="padding:8px 15px;" onclick="doLogout()">Logout</button>
         </div>
 
-        <!-- TAKE ATTENDANCE -->
         <div class="card" id="attendanceFormCard">
             <h3>📝 Daily Attendance Entry</h3>
             <div class="field">
@@ -170,7 +162,6 @@
             <button type="button" id="submitBtn" onclick="submitAttendance()">🚀 Submit Attendance</button>
         </div>
 
-        <!-- CORRECTION REQUEST -->
         <div class="card" id="correctionFormCard">
             <h3>⚠️ Attendance Miss Ho Gayi? (Request to Admin)</h3>
             <div class="field">
@@ -192,11 +183,8 @@
 </div>
 
 <script>
-    // PWA Service Worker Registration
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js').then(() => {
-            console.log("Service Worker Registered!");
-        });
+        navigator.serviceWorker.register('sw.js');
     }
 
     function getStorage(key, fallback) {
@@ -214,7 +202,6 @@
         let id = document.getElementById('uid').value.trim().toLowerCase();
         let pass = document.getElementById('upass').value.trim();
 
-        // Admin Check
         if (id === 'admin' && pass === 'admin123') {
             activeUser = { role: 'admin', id: 'admin' };
             document.getElementById('loginSection').classList.add('hidden');
@@ -224,8 +211,7 @@
             return;
         }
 
-        // Supervisor Check
-        let supervisors = getStorage('supervisors', []); // Default hata diya gaya hai
+        let supervisors = getStorage('supervisors', []);
         let found = supervisors.find(s => s.id.toLowerCase() === id && s.pass === pass);
 
         if (found) {
@@ -237,7 +223,6 @@
             loadSupervisorChecklist();
             loadSupervisorRequests();
         } else {
-            // SECURE ALERT (No Passwords shown)
             alert('❌ Invalid ID or Password! Kripya sahi details check karein.');
         }
     }
@@ -255,7 +240,6 @@
         alert("Cloud URL Saved!");
     }
 
-    // ================= ADMIN LOGIC =================
     function addSupervisor() {
         let id = document.getElementById('newSupId').value.trim();
         let pass = document.getElementById('newSupPass').value.trim();
@@ -268,11 +252,13 @@
         document.getElementById('newSupPass').value = '';
         loadAdminData();
     }
+
     function deleteSupervisor(id) {
         let sups = getStorage('supervisors', []).filter(s => s.id !== id);
         setStorage('supervisors', sups);
         loadAdminData();
     }
+
     function addLabour() {
         let name = document.getElementById('labName').value.trim();
         let empId = document.getElementById('labEmpId').value.trim();
@@ -284,24 +270,25 @@
         document.getElementById('labEmpId').value = '';
         loadAdminData();
     }
+
     function deleteLabour(empId) {
         let labs = getStorage('labours', []).filter(l => l.empId !== empId);
         setStorage('labours', labs);
         loadAdminData();
     }
+
     function deleteAttendanceLog(idx) {
         let logs = getStorage('attendanceLogs', []);
         logs.splice(idx, 1);
         setStorage('attendanceLogs', logs);
         loadAdminData();
     }
+
     function exportMonthlyExcel() {
         let logs = getStorage('attendanceLogs', []);
         if(logs.length === 0) { alert("No data to export!"); return; }
         let csv = "Date,Site,Supervisor,Present,Total\n";
-        logs.forEach(l => {
-            csv += `${l.date},${l.site},${l.sup},${l.presentCount},${l.totalCount}\n`;
-        });
+        logs.forEach(l => { csv += `${l.date},${l.site},${l.sup},${l.presentCount},${l.totalCount}\n`; });
         let blob = new Blob([csv], {type: "text/csv"});
         let url = window.URL.createObjectURL(blob);
         let a = document.createElement("a");
@@ -321,42 +308,99 @@
         document.getElementById('statTotalLabours').innerText = labs.length;
         document.getElementById('statTodayPresent').innerText = todayLogs.reduce((sum, l) => sum + (l.presentCount || 0), 0);
 
-        // Sups Table
-        let sHtml = '<table><tr><th>ID</th><th>Pass</th><th>Act</th></tr>';
-        sups.forEach(s => { sHtml += `<tr><td>${s.id}</td><td>${s.pass}</td><td><button class="btn-danger" onclick="deleteSupervisor('${s.id}')">X</button></td></tr>`; });
-        document.getElementById('supTableBox').innerHTML = sHtml + '</table>';
+        // Render Sups Table securely using textContent
+        let supBox = document.getElementById('supTableBox');
+        supBox.innerHTML = '';
+        let sTable = document.createElement('table');
+        sTable.innerHTML = '<tr><th>ID</th><th>Pass</th><th>Act</th></tr>';
+        sups.forEach(s => {
+            let tr = document.createElement('tr');
+            let td1 = document.createElement('td'); td1.textContent = s.id;
+            let td2 = document.createElement('td'); td2.textContent = s.pass;
+            let td3 = document.createElement('td');
+            let btn = document.createElement('button');
+            btn.className = 'btn-danger';
+            btn.textContent = 'X';
+            btn.onclick = () => deleteSupervisor(s.id);
+            td3.appendChild(btn);
+            tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(td3);
+            sTable.appendChild(tr);
+        });
+        supBox.appendChild(sTable);
 
-        // Labs Table
-        let lHtml = '<table><tr><th>ID</th><th>Name</th><th>Act</th></tr>';
-        labs.forEach(l => { lHtml += `<tr><td>${l.empId}</td><td>${l.name}</td><td><button class="btn-danger" onclick="deleteLabour('${l.empId}')">X</button></td></tr>`; });
-        document.getElementById('labTableBox').innerHTML = lHtml + '</table>';
+        // Render Labs Table securely
+        let labBox = document.getElementById('labTableBox');
+        labBox.innerHTML = '';
+        let lTable = document.createElement('table');
+        lTable.innerHTML = '<tr><th>ID</th><th>Name</th><th>Act</th></tr>';
+        labs.forEach(l => {
+            let tr = document.createElement('tr');
+            let td1 = document.createElement('td'); td1.textContent = l.empId;
+            let td2 = document.createElement('td'); td2.textContent = l.name;
+            let td3 = document.createElement('td');
+            let btn = document.createElement('button');
+            btn.className = 'btn-danger';
+            btn.textContent = 'X';
+            btn.onclick = () => deleteLabour(l.empId);
+            td3.appendChild(btn);
+            tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(td3);
+            lTable.appendChild(tr);
+        });
+        labBox.appendChild(lTable);
 
         // Requests Table
-        let reqHtml = '<table><tr><th>Date</th><th>Sup</th><th>Labour</th><th>Reason</th><th>Status/Act</th></tr>';
-        reqs.slice().reverse().forEach(r => {
-            let acts = '';
-            if(r.status === 'Pending') {
-                acts = `<button class="btn-success" onclick="approveReq('${r.reqId}')">✔</button> 
-                        <button class="btn-danger" onclick="rejectReq('${r.reqId}')">✖</button>`;
-            } else {
-                acts = `<span class="badge-${r.status.toLowerCase()}">${r.status}</span>`;
-            }
-            reqHtml += `<tr><td>${r.date}</td><td>${r.sup}</td><td>${r.empName}</td><td>${r.reason}</td><td>${acts}</td></tr>`;
-        });
-        document.getElementById('adminReqTableBox').innerHTML = reqs.length ? reqHtml + '</table>' : '<p>No pending requests.</p>';
+        let reqBox = document.getElementById('adminReqTableBox');
+        reqBox.innerHTML = reqs.length ? '' : '<p>No pending requests.</p>';
+        if(reqs.length > 0) {
+            let rTable = document.createElement('table');
+            rTable.innerHTML = '<tr><th>Date</th><th>Sup</th><th>Labour</th><th>Reason</th><th>Status/Act</th></tr>';
+            reqs.slice().reverse().forEach(r => {
+                let tr = document.createElement('tr');
+                let td1 = document.createElement('td'); td1.textContent = r.date;
+                let td2 = document.createElement('td'); td2.textContent = r.sup;
+                let td3 = document.createElement('td'); td3.textContent = r.empName;
+                let td4 = document.createElement('td'); td4.textContent = r.reason;
+                let td5 = document.createElement('td');
+                if(r.status === 'Pending') {
+                    let b1 = document.createElement('button'); b1.className = 'btn-success'; b1.textContent = '✔'; b1.onclick = () => approveReq(r.reqId);
+                    let b2 = document.createElement('button'); b2.className = 'btn-danger'; b2.textContent = '✖'; b2.onclick = () => rejectReq(r.reqId);
+                    td5.appendChild(b1); td5.appendChild(b2);
+                } else {
+                    let span = document.createElement('span'); span.className = 'badge-' + r.status.toLowerCase(); span.textContent = r.status;
+                    td5.appendChild(span);
+                }
+                tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(td3); tr.appendChild(td4); tr.appendChild(td5);
+                rTable.appendChild(tr);
+            });
+            reqBox.appendChild(rTable);
+        }
 
-        // Logs Table (With Search)
+        // Reports Table with Search
         let searchQ = document.getElementById('searchLog').value.toLowerCase();
-        let rHtml = '<table><tr><th>Date & Site</th><th>Sup ID</th><th>P/T</th><th>Photo</th><th>Admin</th></tr>';
+        let repBox = document.getElementById('reportTableBox');
+        repBox.innerHTML = '';
+        let repTable = document.createElement('table');
+        repTable.innerHTML = '<tr><th>Date & Site</th><th>Sup ID</th><th>P/T</th><th>Photo</th><th>Admin</th></tr>';
         logs.forEach((l, idx) => {
             if(l.date.toLowerCase().includes(searchQ) || l.site.toLowerCase().includes(searchQ) || l.sup.toLowerCase().includes(searchQ)) {
-                let pBtn = l.photo ? `<button class="btn-photo" onclick="viewPhoto('${idx}')">🖼️ View</button>` : 'N/A';
-                rHtml += `<tr><td><b>${l.date}</b><br><small>${l.site}</small></td><td>${l.sup}</td>
-                          <td><b>${l.presentCount}</b> / ${l.totalCount}</td><td>${pBtn}</td>
-                          <td><button class="btn-danger" onclick="deleteAttendanceLog(${idx})">Del</button></td></tr>`;
+                let tr = document.createElement('tr');
+                let td1 = document.createElement('td');
+                td1.innerHTML = `<b>${l.date}</b><br><small>${l.site}</small>`;
+                let td2 = document.createElement('td'); td2.textContent = l.sup;
+                let td3 = document.createElement('td'); td3.innerHTML = `<b>${l.presentCount}</b> / ${l.totalCount}`;
+                let td4 = document.createElement('td');
+                if(l.photo) {
+                    let pBtn = document.createElement('button'); pBtn.className = 'btn-photo'; pBtn.textContent = '🖼️ View'; pBtn.onclick = () => viewPhoto(idx);
+                    td4.appendChild(pBtn);
+                } else { td4.textContent = 'N/A'; }
+                let td5 = document.createElement('td');
+                let dBtn = document.createElement('button'); dBtn.className = 'btn-danger'; dBtn.textContent = 'Del'; dBtn.onclick = () => deleteAttendanceLog(idx);
+                td5.appendChild(dBtn);
+                tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(td3); tr.appendChild(td4); tr.appendChild(td5);
+                repTable.appendChild(tr);
             }
         });
-        document.getElementById('reportTableBox').innerHTML = rHtml + '</table>';
+        repBox.appendChild(repTable);
     }
 
     function approveReq(reqId) {
@@ -368,14 +412,8 @@
             let targetLog = logs.find(l => l.date === req.date && l.sup === req.sup);
             if(targetLog) {
                 let det = targetLog.details.find(d => d.empId === req.empId);
-                if(det && det.status !== 'Present') {
-                    det.status = 'Present';
-                    targetLog.presentCount++;
-                } else if (!det) {
-                    targetLog.details.push({empId: req.empId, name: req.empName, status: 'Present'});
-                    targetLog.presentCount++;
-                    targetLog.totalCount++;
-                }
+                if(det && det.status !== 'Present') { det.status = 'Present'; targetLog.presentCount++; }
+                else if (!det) { targetLog.details.push({empId: req.empId, name: req.empName, status: 'Present'}); targetLog.presentCount++; targetLog.totalCount++; }
             }
             setStorage('attendanceReqs', reqs);
             setStorage('attendanceLogs', logs);
@@ -398,24 +436,34 @@
         }
     }
 
-    // ================= SUPERVISOR LOGIC =================
     function loadSupervisorChecklist() {
         let labs = getStorage('labours', []);
         let box = document.getElementById('checklistContainer');
         let sel = document.getElementById('reqLabour');
         sel.innerHTML = '<option value="">-- Select Labour --</option>';
+        box.innerHTML = '';
         if(labs.length === 0) { box.innerHTML = '<p>No labours added.</p>'; return; }
         
-        let html = '<table>';
+        let table = document.createElement('table');
         labs.forEach(l => {
-            html += `<tr><td style="width:30px;"><input type="checkbox" class="chkBox" data-empid="${l.empId}" data-name="${l.name}"></td>
-                         <td style="text-align:left;"><b>${l.name}</b> (${l.empId})</td></tr>`;
-            sel.innerHTML += `<option value="${l.empId}|${l.name}">${l.name} (${l.empId})</option>`;
+            let tr = document.createElement('tr');
+            let td1 = document.createElement('td'); td1.style.width = '30px';
+            let chk = document.createElement('input'); chk.type = 'checkbox'; chk.className = 'chkBox';
+            chk.dataset.empid = l.empId; chk.dataset.name = l.name;
+            td1.appendChild(chk);
+            let td2 = document.createElement('td'); td2.style.textAlign = 'left';
+            td2.innerHTML = `<b>${l.name}</b> (${l.empId})`;
+            tr.appendChild(td1); tr.appendChild(td2);
+            table.appendChild(tr);
+            
+            let opt = document.createElement('option');
+            opt.value = l.empId + '|' + l.name;
+            opt.textContent = l.name + ' (' + l.empId + ')';
+            sel.appendChild(opt);
         });
-        box.innerHTML = html + '</table>';
+        box.appendChild(table);
     }
 
-    // Photo Compression Code 
     function processImage(event) {
         let file = event.target.files[0];
         if(!file) return;
@@ -428,18 +476,17 @@
             img.onload = function() {
                 let canvas = document.createElement("canvas");
                 let ctx = canvas.getContext("2d");
-                let MAX_WIDTH = 800; // Auto-compress size
+                let MAX_WIDTH = 800;
                 let scaleSize = MAX_WIDTH / img.width;
                 canvas.width = MAX_WIDTH;
                 canvas.height = img.height * scaleSize;
                 ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                compressedImageBase64 = canvas.toDataURL("image/jpeg", 0.6); // 60% quality
+                compressedImageBase64 = canvas.toDataURL("image/jpeg", 0.6);
                 document.getElementById('photoStatus').innerHTML = "✅ Photo Ready!";
             }
         }
     }
 
-    // Submit Attendance to Cloud and Local
     async function submitAttendance() {
         let date = document.getElementById('attendanceDate').value;
         let site = document.getElementById('siteNameInput').value.trim();
@@ -469,28 +516,22 @@
             photo: compressedImageBase64
         };
 
-        // 1. Save Locally
         let logs = getStorage('attendanceLogs', []);
         logs.push(payload);
         setStorage('attendanceLogs', logs);
 
-        // 2. Send to Cloud (Apps Script -> Google Sheets)
         let cloudUrl = getStorage('cloudUrl', '');
         if(cloudUrl) {
             try {
-                await fetch(cloudUrl, {
-                    method: 'POST',
-                    body: JSON.stringify(payload)
-                });
+                await fetch(cloudUrl, { method: 'POST', body: JSON.stringify(payload) });
                 alert("✅ Attendance Saved to System & Cloud!");
             } catch (e) {
-                alert("⚠️ Saved locally, but Cloud sync failed. (Check Internet)");
+                alert("⚠️ Saved locally, but Cloud sync failed.");
             }
         } else {
-            alert("✅ Attendance Saved Locally! (Admin ne Cloud link set nahi kiya hai)");
+            alert("✅ Attendance Saved Locally!");
         }
 
-        // Reset Form
         document.getElementById('submitBtn').innerText = "🚀 Submit Attendance";
         document.getElementById('submitBtn').disabled = false;
         compressedImageBase64 = "";
@@ -507,15 +548,7 @@
 
         let [empId, empName] = reqLab.split('|');
         let reqs = getStorage('attendanceReqs', []);
-        reqs.push({
-            reqId: Date.now(),
-            date: reqDate,
-            sup: activeUser.id,
-            empId: empId,
-            empName: empName,
-            reason: reqReason,
-            status: 'Pending'
-        });
+        reqs.push({ reqId: Date.now(), date: reqDate, sup: activeUser.id, empId: empId, empName: empName, reason: reqReason, status: 'Pending' });
         setStorage('attendanceReqs', reqs);
         alert("Request Sent to Admin!");
         document.getElementById('reqReason').value = "";
@@ -525,11 +558,15 @@
     function loadSupervisorRequests() {
         let reqs = getStorage('attendanceReqs', []).filter(r => r.sup === activeUser.id);
         let box = document.getElementById('myRequestsBox');
-        let html = '<ul>';
+        box.innerHTML = '';
+        if(reqs.length === 0) { box.innerHTML = 'No requests sent.'; return; }
+        let ul = document.createElement('ul');
         reqs.reverse().forEach(r => {
-            html += `<li><b>${r.date}</b> - ${r.empName} <span class="badge-${r.status.toLowerCase()}">${r.status}</span></li>`;
+            let li = document.createElement('li');
+            li.innerHTML = `<b>${r.date}</b> - ${r.empName} <span class="badge-${r.status.toLowerCase()}">${r.status}</span>`;
+            ul.appendChild(li);
         });
-        box.innerHTML = reqs.length ? html + '</ul>' : 'No requests sent.';
+        box.appendChild(ul);
     }
 </script>
 </body>
