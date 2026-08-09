@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Site Attendance System</title>
+    <style>
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background: #eef2f5; margin: 0; padding: 15px; color: #333; }
+        .box { max-width: 980px; margin: auto; background: #fff; padding: 25px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h2, h3 { color: #1a365d; margin-top: 10px; }
+        .field { margin-bottom: 15px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 14px; }
+        input, button { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; }
+        button { background: #0066cc; color: white; border: none; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        button:hover { background: #005bb5; }
+        .hidden { display: none !important; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; background: #fff; }
+        th, td { border: 1px solid #e2e8f0; padding: 10px; text-align: center; }
+        th { background: #0066cc; color: white; }
+        .btn-danger { background: #e53e3e; width: auto; padding: 6px 12px; font-size: 12px; }
+        .btn-warning { background: #718096; width: auto; padding: 6px 12px; font-size: 12px; color: white; }
+        .login-card { max-width: 400px; margin: 30px auto; padding: 25px; border: 1px solid #cbd5e1; border-radius: 8px; background: #f8fafc; }
+    </style>
+</head>
+<body>
+
+<div class="box">
+    <!-- 1. LOGIN SECTION -->
+    <div id="loginSection">
+        <h2 style="text-align:center;">Site Attendance Management</h2>
+        
+        <!-- Yahan Form Tag Add Kiya Hai aur onsubmit handle kiya hai -->
+        <form class="login-card" onsubmit="handleLogin(event)">
+            <div class="field">
+                <label>User ID:</label>
+                <input type="text" id="uid" placeholder="admin ya sup1 daalein" required>
+            </div>
+            <div class="field">
+                <label>Password:</label>
+                <input type="password" id="upass" placeholder="Password daalein" required>
+            </div>
+            
+            <button type="submit" id="loginBtn">Login Karein</button>
+
+            <div style="margin-top:20px; text-align:center;">
+                <button type="button" class="btn-warning" style="width:100%;" onclick="resetSystem()">🔄 System Refresh (Agar fas jaye)</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- 2. ADMIN PANEL -->
+    <div id="adminPanel" class="hidden">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h2>Admin Master Panel</h2>
+            <button type="button" class="btn-danger" onclick="doLogout()">Logout</button>
+        </div>
+        <div style="padding: 20px; background: #e6fffa; border: 1px solid #319795; border-radius: 8px; margin-top: 20px;">
+            <h3 style="margin:0; color: #234e52;">Login Successful! Welcome Admin.</h3>
+            <p>Admin panel abhi test mode mein hai. Yahan aap baaki controls add kar sakte hain.</p>
+        </div>
+    </div>
+
+    <!-- 3. SUPERVISOR PANEL -->
+    <div id="supervisorPanel" class="hidden">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h2 id="supWelcome">Supervisor Panel</h2>
+            <button type="button" class="btn-danger" onclick="doLogout()">Logout</button>
+        </div>
+        <div style="padding: 20px; background: #ebf8ff; border: 1px solid #3182ce; border-radius: 8px; margin-top: 20px;">
+            <h3 style="margin:0; color: #2a4365;">Login Successful! Welcome Supervisor.</h3>
+            <p>Yahan se site attendance enter hogi.</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    // System Reset Function
+    function resetSystem() {
+        localStorage.clear();
+        alert("Cache clear ho gaya hai! Page reload ho raha hai.");
+        window.location.reload();
+    }
+
+    // Main Login Logic (No Refresh)
+    function handleLogin(event) {
+        // Yeh line page ko reload hone se rokti hai
+        event.preventDefault(); 
+        
+        let id = document.getElementById('uid').value.trim().toLowerCase();
+        let pass = document.getElementById('upass').value.trim();
+
+        // Testing credentials
+        if (id === 'admin' && pass === 'admin123') {
+            document.getElementById('loginSection').classList.add('hidden');
+            document.getElementById('adminPanel').classList.remove('hidden');
+        } 
+        else if (id === 'sup1' && pass === '1234') {
+            document.getElementById('loginSection').classList.add('hidden');
+            document.getElementById('supervisorPanel').classList.remove('hidden');
+            document.getElementById('supWelcome').innerText = "Supervisor: sup1";
+        } 
+        else {
+            alert('Galat ID ya Password!\n\nAdmin ke liye: admin / admin123\nSupervisor ke liye: sup1 / 1234');
+        }
+    }
+
+    // Logout Function
+    function doLogout() {
+        document.getElementById('uid').value = '';
+        document.getElementById('upass').value = '';
+        document.getElementById('loginSection').classList.remove('hidden');
+        document.getElementById('adminPanel').classList.add('hidden');
+        document.getElementById('supervisorPanel').classList.add('hidden');
+    }
+</script>
+
+</body>
+</html>
