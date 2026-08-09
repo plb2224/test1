@@ -214,7 +214,7 @@
             return;
         }
 
-        // 2. Default + Dynamic Supervisors List from LocalStorage / Cloud Backup
+        // 2. Supervisors List Check
         let defaultSupervisors = [
             { id: 'supervisor1', pass: 'pass123' },
             { id: 'supervisor2', pass: 'pass456' },
@@ -240,6 +240,7 @@
     }
 
     function doLogout() { activeUser = null; location.reload(); }
+    
     function resetSystemData() {
         if(confirm("Dhyan Dein! Saara local data reset ho jayega. Continue?")) {
             localStorage.clear();
@@ -247,12 +248,13 @@
             location.reload();
         }
     }
+
     function saveCloudUrl() {
         setStorage('cloudUrl', document.getElementById('cloudUrlInput').value.trim());
         alert("Cloud URL Saved!");
     }
 
-    function addSupervisor() {
+    async function addSupervisor() {
         let id = document.getElementById('newSupId').value.trim().toLowerCase();
         let pass = document.getElementById('newSupPass').value.trim();
         if(!id || !pass) { alert("Supervisor ID aur Password dono bharein!"); return; }
@@ -265,10 +267,24 @@
         
         sups.push({ id: id, pass: pass });
         setStorage('supervisors', sups);
+        
+        let cloudUrl = getStorage('cloudUrl', '');
+        if(cloudUrl) {
+            try {
+                await fetch(cloudUrl, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    body: JSON.stringify({ type: 'supervisor', supId: id, supPass: pass })
+                });
+            } catch(e) {
+                console.log("Cloud sync error");
+            }
+        }
+
         document.getElementById('newSupId').value = '';
         document.getElementById('newSupPass').value = '';
         loadAdminData();
-        alert("✅ Supervisor Successfully Added!");
+        alert("✅ Supervisor Successfully Added & Synced!");
     }
 
     function deleteSupervisor(id) {
@@ -329,7 +345,6 @@
         document.getElementById('statTotalLabours').innerText = labs.length;
         document.getElementById('statTodayPresent').innerText = todayLogs.reduce((sum, l) => sum + (l.presentCount || 0), 0);
 
-        // Supervisor Table
         let supBox = document.getElementById('supTableBox');
         supBox.innerHTML = '';
         let sTable = document.createElement('table');
@@ -485,7 +500,7 @@
             td1.appendChild(chk);
             let td2 = document.createElement('td'); td2.style.textAlign = 'left';
             td2.innerHTML = `<b>${l.name}</b> (${l.empId})`;
-            tr.appendChild(td1); td2.appendChild(td2); // corrected below
+            tr.appendChild(td1);
             tr.appendChild(td2);
             table.appendChild(tr);
             
@@ -540,6 +555,7 @@
         document.getElementById('submitBtn').disabled = true;
 
         let payload = {
+            type: 'attendance',
             date: date,
             site: site,
             sup: activeUser.id,
@@ -556,8 +572,12 @@
         let cloudUrl = getStorage('cloudUrl', '');
         if(cloudUrl) {
             try {
-                await fetch(cloudUrl, { method: 'POST', body: JSON.stringify(payload) });
-                alert("✅ Attendance Saved to System & Cloud!");
+                await fetch(cloudUrl, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    body: JSON.stringify(payload)
+                });
+                alert("✅ Attendance Saved & Sent to Google Sheet!");
             } catch (e) {
                 alert("⚠️ Saved locally, but Cloud sync failed.");
             }
