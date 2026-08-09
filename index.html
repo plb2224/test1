@@ -197,11 +197,12 @@
     let activeUser = null;
     let compressedImageBase64 = "";
 
-    function handleLogin(event) {
+ function handleLogin(event) {
         event.preventDefault(); 
         let id = document.getElementById('uid').value.trim().toLowerCase();
         let pass = document.getElementById('upass').value.trim();
 
+        // 1. Admin Login (Fixed)
         if (id === 'admin' && pass === 'admin123') {
             activeUser = { role: 'admin', id: 'admin' };
             document.getElementById('loginSection').classList.add('hidden');
@@ -210,6 +211,30 @@
             loadAdminData();
             return;
         }
+
+        // ==========================================
+        // 2. APNE SUPERVISOR YAHAN SET KAREIN:
+        // ==========================================
+        let defaultSupervisors = [
+            { id: 'supervisor1', pass: 'pass123' }, // Yahan apni marzi ka ID aur Password daalein
+            { id: 'supervisor2', pass: 'pass456' }, // Dusra supervisor banana ho toh yahan likhein
+            { id: 'siteincharge', pass: 'mseng2026' } // Jitne marzi utne add kar sakte hain
+        ];
+
+        let found = defaultSupervisors.find(s => s.id.toLowerCase() === id && s.pass === pass);
+
+        if (found) {
+            activeUser = { role: 'supervisor', id: found.id };
+            document.getElementById('loginSection').classList.add('hidden');
+            document.getElementById('supervisorPanel').classList.remove('hidden');
+            document.getElementById('supWelcome').innerText = "Supervisor: " + found.id.toUpperCase();
+            document.getElementById('attendanceDate').value = new Date().toISOString().split('T')[0];
+            loadSupervisorChecklist();
+            loadSupervisorRequests();
+        } else {
+            alert('❌ Invalid ID or Password! Kripya sahi details check karein.');
+        }
+    }
 
         let supervisors = getStorage('supervisors', []);
         let found = supervisors.find(s => s.id.toLowerCase() === id && s.pass === pass);
