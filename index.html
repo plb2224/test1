@@ -34,7 +34,7 @@
     <!-- LOGIN SECTION -->
     <div id="loginSection">
         <h2 style="text-align:center;">MS ELECTRICALS</h2>
-        <p style="text-align:center; color:#666;">Site Attendance Management System</p>
+        <p style="text-align:center; color:#666;">Lightning Fast Site Attendance System</p>
         
         <div class="card" style="max-width: 400px; margin: 20px auto;">
             <div class="form-group">
@@ -138,7 +138,6 @@
             </div>
             <button type="button" onclick="verifyAndSubmitAttendance()">🔍 Verify & Submit Attendance</button>
             
-            <!-- WhatsApp Instant Share Button -->
             <div id="whatsappShareBox" class="hidden" style="margin-top:10px;">
                 <button type="button" class="btn-whatsapp" onclick="shareLastAttendanceOnWhatsApp()">
                     📱 WhatsApp Par Report & Photo Share Karein
@@ -181,7 +180,7 @@
     window.addEventListener('DOMContentLoaded', async () => {
         let cloudUrl = getStorage('cloudUrl', '');
         if (cloudUrl) {
-            await syncFromCloudSilent();
+            syncFromCloudSilent();
         }
     });
 
@@ -287,7 +286,7 @@
             attendanceReqs: getStorage('attendanceReqs', [])
         };
         try {
-            await fetch(cloudUrl, {
+            fetch(cloudUrl, {
                 method: "POST",
                 mode: "no-cors",
                 headers: { "Content-Type": "text/plain;charset=utf-8" },
@@ -305,8 +304,8 @@
             img.onload = function() {
                 let canvas = document.createElement('canvas');
                 let ctx = canvas.getContext('2d');
-                let MAX_WIDTH = 600;
-                let MAX_HEIGHT = 600;
+                let MAX_WIDTH = 500;
+                let MAX_HEIGHT = 500;
                 let width = img.width;
                 let height = img.height;
 
@@ -318,9 +317,9 @@
                 canvas.width = width;
                 canvas.height = height;
                 ctx.drawImage(img, 0, 0, width, height);
-                base64PhotoString = canvas.toDataURL('image/jpeg', 0.7);
+                base64PhotoString = canvas.toDataURL('image/jpeg', 0.6);
                 
-                document.getElementById('photoPreviewBox').innerHTML = `<img src="${base64PhotoString}" style="max-width:100px; max-height:100px; border-radius:4px; border:1px solid #ccc;"> <span style="font-size:12px; color:green;">✅ Photo Attached</span>`;
+                document.getElementById('photoPreviewBox').innerHTML = `<img src="${base64PhotoString}" style="max-width:100px; max-height:100px; border-radius:4px; border:1px solid #ccc;"> <span style="font-size:12px; color:green;">✅ Photo Optimized & Attached</span>`;
             }
             img.src = e.target.result;
         }
@@ -337,18 +336,17 @@
         
         sups.push({ id: id, pass: pass });
         setStorage('supervisors', sups);
-        await autoSyncToCloud();
+        autoSyncToCloud();
         
         document.getElementById('newSupId').value = '';
         document.getElementById('newSupPass').value = '';
         loadAdminData();
-        alert("Supervisor Added & Synced!");
     }
 
     async function deleteSupervisor(id) {
         let sups = getStorage('supervisors', []).filter(s => s.id !== id);
         setStorage('supervisors', sups);
-        await autoSyncToCloud();
+        autoSyncToCloud();
         loadAdminData();
     }
 
@@ -362,19 +360,18 @@
         
         labs.push({empId: empId, name: name});
         setStorage('labours', labs);
-        await autoSyncToCloud();
+        autoSyncToCloud();
         
         document.getElementById('labName').value = '';
         document.getElementById('labEmpId').value = '';
         loadAdminData();
-        alert("Labour Added & Synced!");
     }
 
     async function deleteLabour(empId) {
         if(!confirm(`Kya aap labour ID (${empId}) ko delete karna chahte hain?`)) return;
         let labs = getStorage('labours', []).filter(l => String(l.empId).trim() !== String(empId).trim());
         setStorage('labours', labs);
-        await autoSyncToCloud();
+        autoSyncToCloud();
         loadAdminData();
     }
 
@@ -382,7 +379,7 @@
         let logs = getStorage('attendanceLogs', []);
         logs.splice(idx, 1);
         setStorage('attendanceLogs', logs);
-        await autoSyncToCloud();
+        autoSyncToCloud();
         loadAdminData();
     }
 
@@ -397,8 +394,7 @@
         a.href = url; a.download = "Attendance_Report.csv"; a.click();
     }
 
-    async function loadAdminData() {
-        await syncFromCloudSilent(); // Auto refresh before showing reports
+    function loadAdminData() {
         let labs = getStorage('labours', []);
         let logs = getStorage('attendanceLogs', []);
         let sups = getStorage('supervisors', []);
@@ -428,191 +424,154 @@
         });
         labBox.appendChild(lTable);
 
-        let reqBox = document.getElementById('adminReqTableBox');
-        reqBox.innerHTML = reqs.length ? '' : '<p style="margin:5px; font-size:13px; color:#666;">No requests found.</p>';
-        if(reqs.length > 0) {
-            let rTable = document.createElement('table');
-            rTable.innerHTML = '<tr><th>Date</th><th>Sup</th><th>Labour</th><th>Reason</th><th>Action</th></tr>';
-            reqs.slice().reverse().forEach((r, i) => {
-                let actualIndex = reqs.length - 1 - i;
-                let tr = document.createElement('tr');
-                let actCell = r.status === 'Pending' ? 
-                    `<button class="btn-success" onclick="approveReq(${actualIndex})">✔</button> <button class="btn-danger" onclick="rejectReq(${actualIndex})">✖</button>` : 
-                    `<b>${r.status}</b>`;
-                tr.innerHTML = `<td>${r.date}</td><td>${r.sup}</td><td>${r.empName}</td><td>${r.reason}</td><td>${actCell}</td>`;
-                rTable.appendChild(tr);
-            });
-            reqBox.appendChild(rTable);
-        }
-
-        let searchQ = document.getElementById('searchLog').value.toLowerCase();
-        let repBox = document.getElementById('reportTableBox');
-        repBox.innerHTML = '';
-        let repTable = document.createElement('table');
-        repTable.innerHTML = '<tr><th>Date</th><th>Site</th><th>Supervisor</th><th>Present/Total</th><th>Photo</th><th>Action</th></tr>';
-        
-        logs.filter(l => !searchQ || l.date.toLowerCase().includes(searchQ) || l.site.toLowerCase().includes(searchQ)).slice().reverse().forEach((l, idx) => {
-            let actualIdx = logs.length - 1 - idx;
-            let tr = document.createElement('tr');
-            // Check if photo is Drive URL or base64
-            let photoCell = l.photo ? `<a href="${l.photo}" target="_blank"><img src="${l.photo.startsWith('http') ? l.photo : l.photo}" style="width:40px; height:40px; object-fit:cover; border-radius:4px;"></a>` : 'No Photo';
-            tr.innerHTML = `<td>${l.date}</td><td>${l.site}</td><td>${l.sup}</td><td>${l.presentCount} / ${l.totalCount}</td><td>${photoCell}</td><td><button class="btn-danger" onclick="deleteAttendanceLog(${actualIdx})">Delete</button></td>`;
-            repTable.appendChild(tr);
+        let reportBox = document.getElementById('reportTableBox');
+        let searchQuery = document.getElementById('searchLog').value.toLowerCase();
+        let rTableHTML = '<table><tr><th>Date</th><th>Site</th><th>Supervisor</th><th>Present / Total</th><th>Action</th></tr>';
+        logs.forEach((l, idx) => {
+            if(!searchQuery || l.date.toLowerCase().includes(searchQuery) || l.site.toLowerCase().includes(searchQuery)) {
+                rTableHTML += `<tr><td>${l.date}</td><td>${l.site}</td><td>${l.sup}</td><td>${l.presentCount} / ${l.totalCount}</td><td><button class="btn-danger" onclick="deleteAttendanceLog(${idx})">Delete</button></td></tr>`;
+            }
         });
-        repBox.appendChild(repTable);
+        rTableHTML += '</table>';
+        reportBox.innerHTML = rTableHTML;
+
+        let reqBox = document.getElementById('adminReqTableBox');
+        let reqHTML = '<table><tr><th>Date</th><th>Supervisor</th><th>Labour</th><th>Reason</th><th>Action</th></tr>';
+        reqs.forEach((r, idx) => {
+            if(r.status === 'Pending') {
+                reqHTML += `<tr><td>${r.date}</td><td>${r.sup}</td><td>${r.empName} (${r.empId})</td><td>${r.reason}</td><td><button class="btn-success" onclick="resolveRequest(${idx}, 'Approved')">Approve</button> <button class="btn-danger" onclick="resolveRequest(${idx}, 'Rejected')">Reject</button></td></tr>`;
+            }
+        });
+        reqHTML += '</table>';
+        reqBox.innerHTML = reqHTML;
+    }
+
+    async function resolveRequest(idx, status) {
+        let reqs = getStorage('attendanceReqs', []);
+        reqs[idx].status = status;
+        setStorage('attendanceReqs', reqs);
+        autoSyncToCloud();
+        loadAdminData();
     }
 
     function loadSupervisorChecklist() {
         let labs = getStorage('labours', []);
         let container = document.getElementById('checklistContainer');
-        container.innerHTML = labs.length === 0 ? '<p style="color:#666; font-size:13px;">Koi labour nahi hai. Admin se add karwayein.</p>' : '';
-        
+        container.innerHTML = '';
+        if(labs.length === 0) {
+            container.innerHTML = '<p style="color:red; font-size:13px;">No labours added yet. Contact Admin.</p>';
+            return;
+        }
         labs.forEach(l => {
             let div = document.createElement('div');
-            div.style.cssText = "margin-bottom:6px; padding:4px; background:#f9f9f9; border-radius:4px; border:1px solid #eee;";
-            div.innerHTML = `<label style="font-weight:normal; display:flex; align-items:center; cursor:pointer;"><input type="checkbox" class="lab-chk" value="${l.empId}" style="width:18px; height:18px; margin-right:10px;"> <span style="font-weight:bold; color:#2c3e50; margin-right:8px;">[ID: ${l.empId}]</span> ${l.name}</label>`;
+            div.style.cssText = "display:flex; align-items:center; justify-content:space-between; padding:5px 0; border-bottom:1px solid #eee;";
+            div.innerHTML = `<span><b>${l.empId}</b> - ${l.name}</span> <input type="checkbox" class="labour-cb" value="${l.empId}" data-name="${l.name}" style="width:20px; height:20px;">`;
             container.appendChild(div);
         });
 
-        let reqLabSelect = document.getElementById('reqLabour');
-        reqLabSelect.innerHTML = '';
+        let select = document.getElementById('reqLabour');
+        select.innerHTML = '';
         labs.forEach(l => {
             let opt = document.createElement('option');
             opt.value = l.empId;
-            opt.innerText = `[${l.empId}] ${l.name}`;
-            reqLabSelect.appendChild(opt);
+            opt.text = `${l.empId} - ${l.name}`;
+            select.appendChild(opt);
         });
     }
 
-    function verifyAndSubmitAttendance() {
+    async function verifyAndSubmitAttendance() {
         let date = document.getElementById('attendanceDate').value;
         let site = document.getElementById('siteNameInput').value.trim();
-        if(!date || !site) { alert("Date aur Site Name zaroori hai!"); return; }
+        if(!date || !site) { alert("Date aur Site Name bharein!"); return; }
 
-        let checkboxes = document.querySelectorAll('.lab-chk:checked');
-        let presentIds = Array.from(checkboxes).map(cb => cb.value);
-        presentIds = [...new Set(presentIds)];
+        let checkboxes = document.querySelectorAll('.labour-cb:checked');
+        let presentList = [];
+        let presentNames = [];
+        checkboxes.forEach(cb => {
+            presentList.push(cb.value);
+            presentNames.push(cb.getAttribute('data-name'));
+        });
 
-        if(presentIds.length === 0) {
-            alert("⚠️ Kam se kam ek labour select karein!");
-            return;
-        }
-
-        let labs = getStorage('labours', []);
-        let selectedDetails = presentIds.map(id => {
-            let l = labs.find(x => String(x.empId) === String(id));
-            return l ? `- ${l.name} (ID: ${l.empId})` : `- ID: ${id}`;
-        }).join("\n");
-
-        let confirmMsg = `📋 Kripya verify karein (${presentIds.length} Labour Present):\n\nSite: ${site}\nDate: ${date}\n\nSelected Workers:\n${selectedDetails}\n\nKya aap yeh attendance submit karna chahte hain?`;
-
-        if(confirm(confirmMsg)) {
-            submitAttendanceFinal(date, site, presentIds);
-        }
-    }
-
-    async function submitAttendanceFinal(date, site, presentIds) {
-        let totalLabs = getStorage('labours', []).length;
-        let logs = getStorage('attendanceLogs', []);
-        
-        let newLog = {
+        let totalCount = getStorage('labours', []).length;
+        let log = {
             date: date,
             site: site,
             sup: activeUser.id,
-            presentCount: presentIds.length,
-            totalCount: totalLabs,
-            presentList: presentIds,
+            presentCount: presentList.length,
+            totalCount: totalCount,
+            presentList: presentList,
+            presentNames: presentNames,
             photo: base64PhotoString
         };
 
-        logs.push(newLog);
-        lastSubmittedLog = newLog;
-
+        let logs = getStorage('attendanceLogs', []);
+        logs.push(log);
         setStorage('attendanceLogs', logs);
-        await autoSyncToCloud();
-        
-        alert("✅ Attendance Successfully Submitted & Synced! (Photo Drive par upload ho rahi hai)");
-        
+        lastSubmittedLog = log;
+
+        autoSyncToCloud();
+
+        alert("✅ Attendance Successfully Submitted & Synced!");
         document.getElementById('whatsappShareBox').classList.remove('hidden');
-        
-        document.getElementById('siteNameInput').value = '';
-        document.querySelectorAll('.lab-chk').forEach(cb => cb.checked = false);
-        document.getElementById('groupPhoto').value = '';
-        document.getElementById('photoPreviewBox').innerHTML = '';
-        base64PhotoString = "";
     }
 
     function shareLastAttendanceOnWhatsApp() {
-        if (!lastSubmittedLog) {
-            alert("Pehle attendance submit karein!");
-            return;
-        }
-        let labs = getStorage('labours', []);
-        let presentNames = lastSubmittedLog.presentList.map(id => {
-            let l = labs.find(x => String(x.empId) === String(id));
-            return l ? `${l.name} (${l.empId})` : `ID: ${id}`;
-        }).join(", ");
+        if(!lastSubmittedLog) return;
+        let l = lastSubmittedLog;
+        let text = `⚡ *MS ELECTRICALS ATTENDANCE REPORT* ⚡\n`;
+        text += `📅 Date: ${l.date}\n`;
+        text += `🏗️ Site: ${l.site}\n`;
+        text += `👨‍💼 Supervisor: ${l.sup.toUpperCase()}\n`;
+        text += `👥 Present Labours: ${l.presentCount} / ${l.totalCount}\n`;
+        text += `--------------------------------\n`;
+        text += `✅ Present List:\n`;
+        l.presentList.forEach((id, idx) => {
+            text += `${idx+1}. ${id} - ${l.presentNames[idx]}\n`;
+        });
+        text += `--------------------------------\n`;
+        text += `Submitted via MS Electricals Portal`;
 
-        let msg = `*MS ELECTRICALS - SITE ATTENDANCE*%0A` +
-                  `📅 *Date:* ${lastSubmittedLog.date}%0A` +
-                  `🏗️ *Site:* ${lastSubmittedLog.site}%0A` +
-                  `👷 *Supervisor:* ${lastSubmittedLog.sup.toUpperCase()}%0A` +
-                  `✅ *Total Present:* ${lastSubmittedLog.presentCount} / ${lastSubmittedLog.totalCount}%0A%0A` +
-                  `👥 *Present Workers:*%0A${presentNames}%0A%0A` +
-                  `_Sent via MS Electricals App_`;
-
-        let whatsappUrl = `https://api.whatsapp.com/send?text=${msg}`;
-        window.open(whatsappUrl, '_blank');
+        let encodedUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+        window.open(encodedUrl, '_blank');
     }
 
     async function sendRequest() {
         let date = document.getElementById('reqDate').value;
-        let empId = document.getElementById('reqLabour').value;
+        let labourSelect = document.getElementById('reqLabour');
+        let empId = labourSelect.value;
+        let empName = labourSelect.options[labourSelect.selectedIndex].text;
         let reason = document.getElementById('reqReason').value.trim();
+
         if(!date || !reason) { alert("Date aur Reason bharein!"); return; }
 
-        let labs = getStorage('labours', []);
-        let labObj = labs.find(l => String(l.empId) === String(empId));
         let reqs = getStorage('attendanceReqs', []);
-
         reqs.push({
             date: date,
             sup: activeUser.id,
             empId: empId,
-            empName: labObj ? `${labObj.name} (ID: ${labObj.empId})` : empId,
+            empName: empName,
             reason: reason,
             status: 'Pending'
         });
         setStorage('attendanceReqs', reqs);
-        await autoSyncToCloud();
-        
+        autoSyncToCloud();
+
         document.getElementById('reqReason').value = '';
-        alert("📤 Request bhej di gayi hai!");
+        alert("Correction Request Sent to Admin!");
         loadSupervisorRequests();
     }
 
     function loadSupervisorRequests() {
         let reqs = getStorage('attendanceReqs', []).filter(r => r.sup === activeUser.id);
         let box = document.getElementById('myRequestsBox');
-        box.innerHTML = reqs.length === 0 ? 'Pichli koi request nahi hai.' : `<b>Aapki Requests:</b> ${reqs.length} total`;
-    }
-
-    async function approveReq(idx) {
-        let reqs = getStorage('attendanceReqs', []);
-        reqs[idx].status = 'Approved';
-        setStorage('attendanceReqs', reqs);
-        await autoSyncToCloud();
-        loadAdminData();
-    }
-
-    async function rejectReq(idx) {
-        let reqs = getStorage('attendanceReqs', []);
-        reqs[idx].status = 'Rejected';
-        setStorage('attendanceReqs', reqs);
-        await autoSyncToCloud();
-        loadAdminData();
+        let html = '<b>My Requests Status:</b><br><ul>';
+        reqs.forEach(r => {
+            let color = r.status === 'Approved' ? 'green' : (r.status === 'Rejected' ? 'red' : 'orange');
+            html += `<li>${r.date} (${r.empName}): <span style="color:${color}; font-weight:bold;">${r.status}</span></li>`;
+        });
+        html += '</ul>';
+        box.innerHTML = html;
     }
 </script>
-
 </body>
 </html>
