@@ -195,18 +195,37 @@
             return;
         }
         try {
-            let res = await fetch(cloudUrl + "?action=getAllData", {
-                method: 'GET',
-                mode: 'cors'
-            });
-            let data = await res.json();
-            if(data.supervisors) setStorage('supervisors', data.supervisors);
-            if(data.labours) setStorage('labours', data.labours);
+            let res = await fetch(cloudUrl + "?action=getAllData");
+            
+            if (!res.ok) throw new Error('Network response status: ' + res.status);
+            
+            let textData = await res.text();
+            let data;
+            try {
+                data = JSON.parse(textData);
+            } catch(err) {
+                throw new Error("Server ne JSON ki jagah HTML/Text bheja hai. URL check karein.");
+            }
+            
+            if(data.status === 'error') {
+                throw new Error("Script Error: " + data.message);
+            }
+
+            // Safe Sync: Only update local storage if cloud actually has data, preventing data wipeout on empty sheets
+            if(data.supervisors && data.supervisors.length > 0) {
+                setStorage('supervisors', data.supervisors);
+            }
+            if(data.labours && data.labours.length > 0) {
+                setStorage('labours', data.labours);
+            }
+            
             alert("✅ Cloud se saara data successfully sync ho gaya!");
             if(activeUser && activeUser.role === 'admin') loadAdminData();
             if(activeUser && activeUser.role === 'supervisor') loadSupervisorChecklist();
+            
         } catch(e) {
-            alert("❌ Sync Failed! Check karein ki URL ke aakhir mein '/exec' hai aur 'Anyone' access selected hai.");
+            console.error("Sync Error Details:", e);
+            alert("❌ Sync Failed! Asli Error: " + e.message);
         }
     }
 
@@ -253,10 +272,7 @@
         let cloudUrl = getStorage('cloudUrl', '');
         if(!cloudUrl) return;
         try {
-            let res = await fetch(cloudUrl + "?action=getAllData", {
-                method: 'GET',
-                mode: 'cors'
-            });
+            let res = await fetch(cloudUrl + "?action=getAllData");
             let data = await res.json();
             if(data.supervisors && data.supervisors.length > 0) setStorage('supervisors', data.supervisors);
             if(data.labours && data.labours.length > 0) setStorage('labours', data.labours);
@@ -437,7 +453,7 @@
         let sel = document.getElementById('reqLabour');
         sel.innerHTML = '<option value="">-- Select Labour --</option>';
         box.innerHTML = '';
-        if(labs.length === 0) { box.innerHTML = '<p>No labours found. Click "Refresh" or check Cloud URL.</p>'; return; }
+        if(labs.length === 0) { box.innerHTML = '<p>No labours found. Add labours from Admin Panel or check Cloud.</p>'; return; }
         
         let table = document.createElement('table');
         labs.forEach(l => {
