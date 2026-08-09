@@ -3,214 +3,515 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MS Electricals - Admin Panel</title>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <title>MS ELECTRICALS - Attendance System</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 15px; background: #f4f4f9; }
-        .container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        h2 { color: #333; margin-top: 0; }
-        .section { margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 5px; background: #fafafa; }
-        input, button { padding: 10px; margin: 6px 0; width: 100%; box-sizing: border-box; font-size: 14px; }
-        button { background: #007BFF; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        button:hover { background: #0056b3; }
-        .delete-btn { background: #dc3545; width: auto; padding: 5px 10px; font-size: 12px; }
-        .delete-btn:hover { background: #bd2130; }
-        ul { list-style: none; padding: 0; margin-top: 10px; }
-        li { background: #fff; margin-top: 5px; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #eee; border-radius: 4px; }
-        #syncStatus { font-size: 13px; font-weight: bold; color: green; float: right; }
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background: #eef2f5; margin: 0; padding: 15px; color: #333; }
+        .box { max-width: 1000px; margin: auto; background: #fff; padding: 25px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h2, h3 { color: #1a365d; margin-top: 10px; }
+        .field { margin-bottom: 12px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 13px; }
+        input, select, button, textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; }
+        button { background: #0066cc; color: white; border: none; font-weight: bold; cursor: pointer; margin-top: 5px; border-radius: 6px; transition: 0.3s; }
+        button:hover { opacity: 0.9; }
+        button:disabled { background: #888; cursor: not-allowed; }
+        .hidden { display: none !important; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; background: #fff; }
+        th, td { border: 1px solid #e2e8f0; padding: 10px; text-align: center; }
+        th { background: #1a365d; color: white; }
+        .btn-danger { background: #e53e3e; width: auto; padding: 6px 12px; font-size: 12px; }
+        .btn-warning { background: #dd6b20; width: auto; padding: 6px 12px; font-size: 12px; color: white; }
+        .btn-success { background: #38a169; width: auto; padding: 6px 12px; font-size: 12px; }
+        .card { background: #f8fafc; padding: 15px; border: 1px solid #cbd5e1; border-radius: 8px; margin-bottom: 20px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 15px; }
+        .stat-card { padding: 15px; border-radius: 8px; color: white; text-align: center; }
+        .bg-blue { background: #3182ce; }
+        .bg-green { background: #38a169; }
+        .login-card { max-width: 400px; margin: 30px auto; padding: 20px; border: 1px solid #cbd5e1; border-radius: 8px; background: #f8fafc; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h2>Admin Panel <span id="syncStatus">Synced ✓</span></h2>
-    
-    <!-- Cloud URL Setup Section -->
-    <div class="section">
-        <h3>Google Cloud URL Setup</h3>
-        <input type="text" id="cloudUrlInput" placeholder="Yahan apna /exec wala URL dalein">
-        <button onclick="saveCloudUrl()">Save Cloud URL</button>
+<div class="box">
+    <!-- LOGIN SECTION -->
+    <div id="loginSection">
+        <h2 style="text-align:center;">MS ELECTRICALS</h2>
+        <p style="text-align:center; color:#666; margin-top:-10px;">Site Attendance Management</p>
+        
+        <div class="login-card">
+            <div class="field">
+                <label>User ID:</label>
+                <input type="text" id="uid" placeholder="Admin ya Supervisor ID">
+            </div>
+            <div class="field">
+                <label>Password:</label>
+                <input type="password" id="upass" placeholder="Password daalein">
+            </div>
+            <button type="button" onclick="handleLogin()">Login Karein</button>
+            <div style="margin-top:15px; text-align:center;">
+                <button type="button" class="btn-success" style="width:100%; padding:8px; margin-bottom:8px;" onclick="syncFromCloud()">🔄 Cloud se Data Sync Karein</button>
+                <button type="button" class="btn-warning" style="width:100%; padding:8px;" onclick="resetSystemData()">🔄 System Data Reset</button>
+            </div>
+        </div>
     </div>
 
-    <!-- Supervisor Management Section -->
-    <div class="section">
-        <h3>Manage Supervisors</h3>
-        <input type="text" id="supId" placeholder="Supervisor ID">
-        <input type="text" id="supPass" placeholder="Password">
-        <button onclick="handleAddNewSupervisor()">Add Supervisor</button>
-        <ul id="supList"></ul>
+    <!-- ADMIN PANEL -->
+    <div id="adminPanel" class="hidden">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h2>👑 Admin Master Panel</h2>
+            <div>
+                <button type="button" class="btn-success" style="padding:8px 12px;" onclick="syncFromCloud()">🔄 Sync Cloud</button>
+                <button type="button" class="btn-danger" style="padding:8px 12px;" onclick="doLogout()">Logout</button>
+            </div>
+        </div>
+        
+        <div class="stats-grid">
+            <div class="stat-card bg-blue">
+                <h4 style="margin:0; font-size:13px; text-transform:uppercase;">Total Labours</h4>
+                <h2 id="statTotalLabours" style="margin:8px 0 0 0; font-size:26px;">0</h2>
+            </div>
+            <div class="stat-card bg-green">
+                <h4 style="margin:0; font-size:13px; text-transform:uppercase;">Aaj Ke Present</h4>
+                <h2 id="statTodayPresent" style="margin:8px 0 0 0; font-size:26px;">0</h2>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3 style="margin:0 0 8px 0;">☁️ Google Cloud & Sheet Auto-Save Link</h3>
+            <div style="display:flex; gap:6px;">
+                <input type="text" id="cloudUrlInput" placeholder="Paste Apps Script Web App URL ending with /exec...">
+                <button type="button" class="btn-success" style="width:150px;" onclick="saveCloudUrl()">Save Link</button>
+            </div>
+        </div>
+
+        <div class="card" style="border-left: 4px solid #dd6b20;">
+            <h3>🔔 Attendance Correction Requests</h3>
+            <div id="adminReqTableBox" style="overflow-x:auto;"></div>
+        </div>
+
+        <div style="display:flex; gap:20px; flex-wrap:wrap;">
+            <div class="card" style="flex:1; min-width:300px;">
+                <h3>👑 Manage Supervisors</h3>
+                <div style="display:flex; gap:5px; margin-bottom:10px;">
+                    <input type="text" id="newSupId" placeholder="Supervisor ID">
+                    <input type="password" id="newSupPass" placeholder="Password">
+                    <button type="button" class="btn-success" onclick="addSupervisor()">Add</button>
+                </div>
+                <div id="supTableBox" style="max-height:200px; overflow-y:auto;"></div>
+            </div>
+            <div class="card" style="flex:1; min-width:300px;">
+                <h3>👷 Add Labour</h3>
+                <div style="display:flex; gap:5px; margin-bottom:10px;">
+                    <input type="text" id="labName" placeholder="Name">
+                    <input type="text" id="labEmpId" placeholder="ID (L01)">
+                    <button type="button" class="btn-success" onclick="addLabour()">Add</button>
+                </div>
+                <div id="labTableBox" style="max-height:200px; overflow-y:auto;"></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h3>📋 Local Attendance Reports</h3>
+                <button type="button" class="btn-success" onclick="exportMonthlyExcel()">📊 Download CSV</button>
+            </div>
+            <input type="text" id="searchLog" placeholder="🔍 Search Date/Site..." onkeyup="loadAdminData()" style="margin-bottom:10px;">
+            <div id="reportTableBox" style="overflow-x:auto;"></div>
+        </div>
     </div>
 
-    <!-- Labour Management Section -->
-    <div class="section">
-        <h3>Manage Labours</h3>
-        <input type="text" id="labEmpId" placeholder="Employee ID">
-        <input type="text" id="labName" placeholder="Labour Name">
-        <button onclick="handleAddNewLabour()">Add Labour</button>
-        <ul id="labList"></ul>
+    <!-- SUPERVISOR PANEL -->
+    <div id="supervisorPanel" class="hidden">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h2 id="supWelcome">Supervisor</h2>
+            <div>
+                <button type="button" class="btn-success" style="padding:8px 12px;" onclick="syncFromCloud()">🔄 Refresh</button>
+                <button type="button" class="btn-danger" style="padding:8px 12px;" onclick="doLogout()">Logout</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>📝 Daily Attendance Entry</h3>
+            <div class="field">
+                <label>Date:</label>
+                <input type="date" id="attendanceDate">
+            </div>
+            <div class="field">
+                <label>Site Name:</label>
+                <input type="text" id="siteNameInput" placeholder="e.g., Site Phase 1">
+            </div>
+            <div class="field">
+                <label>📸 Group Selfie / Photo:</label>
+                <input type="file" id="groupPhoto" accept="image/*" capture="environment">
+            </div>
+            <div class="field">
+                <label>Checklist (Tick for Present):</label>
+                <div id="checklistContainer" style="max-height:220px; overflow-y:auto; border:1px solid #ddd; padding:8px; background:#fff; border-radius:6px;"></div>
+            </div>
+            <button type="button" id="submitBtn" onclick="submitAttendance()">🚀 Submit Attendance</button>
+        </div>
+
+        <div class="card">
+            <h3>⚠️ Attendance Miss Ho Gayi? (Request)</h3>
+            <div class="field">
+                <label>Date:</label>
+                <input type="date" id="reqDate">
+            </div>
+            <div class="field">
+                <label>Labour:</label>
+                <select id="reqLabour"></select>
+            </div>
+            <div class="field">
+                <label>Reason:</label>
+                <input type="text" id="reqReason" placeholder="Reason...">
+            </div>
+            <button type="button" class="btn-warning" onclick="sendRequest()">📤 Send Request</button>
+            <div id="myRequestsBox" style="margin-top:15px; font-size:12px;"></div>
+        </div>
     </div>
 </div>
 
 <script>
-    var supervisors = JSON.parse(localStorage.getItem("supervisors")) || [];
-    var labours = JSON.parse(localStorage.getItem("labours")) || [];
+    function getStorage(key, fallback) {
+        try { let item = localStorage.getItem(key); return item ? JSON.parse(item) : fallback; } catch (e) { return fallback; }
+    }
+    function setStorage(key, val) {
+        try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) {}
+    }
 
-    // App khulte hi cloud se data load karne ke liye
-    window.onload = function() {
-        var savedUrl = localStorage.getItem("cloudUrl");
-        if (savedUrl) {
-            document.getElementById("cloudUrlInput").value = savedUrl;
-            loadDataFromCloud();
+    let activeUser = null;
+
+    async function syncFromCloud() {
+        let cloudUrl = getStorage('cloudUrl', '');
+        if(!cloudUrl) {
+            alert("⚠️ Pehle Admin Panel mein Apps Script ka Web App URL (/exec wala) daalkar Save Karein!");
+            return;
         }
-        renderLists();
-    };
+        try {
+            let res = await fetch(cloudUrl + "?action=getAllData");
+            if (!res.ok) throw new Error('Network response status: ' + res.status);
+            
+            let textData = await res.text();
+            let data = JSON.parse(textData);
+            
+            if(data.status === 'error') throw new Error("Script Error: " + data.message);
 
-    // Cloud URL Save karne ka function
-    function saveCloudUrl() {
-        var url = document.getElementById("cloudUrlInput").value.trim();
-        if (url) {
-            localStorage.setItem("cloudUrl", url);
-            alert("Cloud URL successfully save ho gaya!");
-            loadDataFromCloud();
+            if(data.supervisors) setStorage('supervisors', data.supervisors);
+            if(data.labours) setStorage('labours', data.labours);
+            
+            alert("✅ Cloud se saara data successfully sync ho gaya!");
+            if(activeUser && activeUser.role === 'admin') loadAdminData();
+            if(activeUser && activeUser.role === 'supervisor') loadSupervisorChecklist();
+            
+        } catch(e) {
+            console.error("Sync Error:", e);
+            alert("❌ Sync Failed! Error: " + e.message);
+        }
+    }
+
+    async function handleLogin() {
+        let id = document.getElementById('uid').value.trim().toLowerCase();
+        let pass = document.getElementById('upass').value.trim();
+
+        if(!id || !pass) { alert('❌ ID aur Password daalein!'); return; }
+
+        await syncFromCloudSilent();
+
+        if (id === 'admin' && pass === 'admin123') {
+            activeUser = { role: 'admin', id: 'admin' };
+            document.getElementById('loginSection').classList.add('hidden');
+            document.getElementById('adminPanel').classList.remove('hidden');
+            document.getElementById('cloudUrlInput').value = getStorage('cloudUrl', '');
+            loadAdminData();
+            return;
+        }
+
+        let defaultSupervisors = [
+            { id: 'supervisor1', pass: 'pass123' },
+            { id: 'supervisor2', pass: 'pass456' },
+            { id: 'siteincharge', pass: 'mseng2026' }
+        ];
+        let storedSupervisors = getStorage('supervisors', []);
+        let allSupervisors = defaultSupervisors.concat(storedSupervisors);
+        let found = allSupervisors.find(s => s.id.toLowerCase() === id && s.pass === pass);
+
+        if (found) {
+            activeUser = { role: 'supervisor', id: found.id };
+            document.getElementById('loginSection').classList.add('hidden');
+            document.getElementById('supervisorPanel').classList.remove('hidden');
+            document.getElementById('supWelcome').innerText = "Supervisor: " + found.id.toUpperCase();
+            document.getElementById('attendanceDate').value = new Date().toISOString().split('T')[0];
+            document.getElementById('reqDate').value = new Date().toISOString().split('T')[0];
+            loadSupervisorChecklist();
+            loadSupervisorRequests();
         } else {
-            alert("Kripya sahi URL dalein!");
+            alert('❌ Invalid ID or Password!');
         }
     }
 
-    // Google Sheet se data fetch karne ka function
-    function loadDataFromCloud() {
-        var cloudUrl = localStorage.getItem("cloudUrl");
-        if (!cloudUrl) return;
-
-        fetch(cloudUrl + "?action=getAllData")
-            .then(response => response.json())
-            .then(data => {
-                if(data.supervisors && data.labours) {
-                    supervisors = data.supervisors;
-                    labours = data.labours;
-                    
-                    localStorage.setItem("supervisors", JSON.stringify(supervisors));
-                    localStorage.setItem("labours", JSON.stringify(labours));
-                    
-                    renderLists();
-                    console.log("Cloud se latest data load ho gaya!");
-                }
-            })
-            .catch(err => console.log("Auto-load failed:", err));
+    async function syncFromCloudSilent() {
+        let cloudUrl = getStorage('cloudUrl', '');
+        if(!cloudUrl) return;
+        try {
+            let res = await fetch(cloudUrl + "?action=getAllData");
+            let data = await res.json();
+            if(data.supervisors) setStorage('supervisors', data.supervisors);
+            if(data.labours) setStorage('labours', data.labours);
+        } catch(e) {}
     }
 
-    // Background mein automatic data Google Sheet par bhejne ke liye (Auto-Sync)
-    function autoSyncToCloud() {
-        var cloudUrl = localStorage.getItem("cloudUrl");
-        if (!cloudUrl) return;
-
-        var statusSpan = document.getElementById("syncStatus");
-        if(statusSpan) {
-            statusSpan.innerText = "Saving...";
-            statusSpan.style.color = "orange";
+    function doLogout() { activeUser = null; location.reload(); }
+    function resetSystemData() { if(confirm("Reset all local data?")) { localStorage.clear(); location.reload(); } }
+    
+    function saveCloudUrl() {
+        let url = document.getElementById('cloudUrlInput').value.trim();
+        if(!url.endsWith('/exec')) {
+            alert("⚠️ Warning: Google Web App URL aamtaur par '/exec' par khatam hota hai.");
         }
+        setStorage('cloudUrl', url);
+        alert("Cloud URL Saved!");
+        syncFromCloud();
+    }
 
-        var payload = {
-            supervisors: supervisors,
-            labours: labours
+    // Push data to cloud automatically (Two-way sync update)
+    async function autoSyncToCloud() {
+        let cloudUrl = getStorage('cloudUrl', '');
+        if(!cloudUrl) return;
+        let payload = {
+            supervisors: getStorage('supervisors', []),
+            labours: getStorage('labours', [])
         };
-
-        fetch(cloudUrl, {
-            method: "POST",
-            mode: "no-cors",
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify(payload)
-        }).then(() => {
-            if(statusSpan) {
-                statusSpan.innerText = "Synced ✓";
-                statusSpan.style.color = "green";
-            }
-        }).catch((err) => {
-            if(statusSpan) {
-                statusSpan.innerText = "Sync Failed ❌";
-                statusSpan.style.color = "red";
-            }
-        });
+        try {
+            await fetch(cloudUrl, {
+                method: "POST",
+                mode: "no-cors",
+                headers: { "Content-Type": "text/plain;charset=utf-8" },
+                body: JSON.stringify(payload)
+            });
+        } catch(e) { console.error("Auto-sync error:", e); }
     }
 
-    // Screen par list dikhane aur update karne ke liye
-    function renderLists() {
-        var supListHtml = "";
-        supervisors.forEach(sup => {
-            supListHtml += `<li><span>ID: <b>${sup.id}</b> (Pass: ${sup.pass})</span> <button class="delete-btn" onclick="removeSupervisor('${sup.id}')">Delete</button></li>`;
-        });
-        document.getElementById("supList").innerHTML = supListHtml;
-
-        var labListHtml = "";
-        labours.forEach(lab => {
-            labListHtml += `<li><span>ID: <b>${lab.empId}</b> - Name: ${lab.name}</span> <button class="delete-btn" onclick="removeLabour('${lab.empId}')">Delete</button></li>`;
-        });
-        document.getElementById("labList").innerHTML = labListHtml;
-    }
-
-    // Naya Supervisor Add karne ka function (Duplicate check ke sath)
-    function handleAddNewSupervisor() {
-        var id = document.getElementById("supId").value.trim();
-        var pass = document.getElementById("supPass").value.trim();
-
-        if(!id || !pass) {
-            alert("Kripya ID aur Password dono bharein!");
-            return;
-        }
-
-        let exists = supervisors.some(sup => sup.id === id);
-        if(exists) {
-            alert("Yeh Supervisor ID pehle se maujood hai!");
-            return;
-        }
+    async function addSupervisor() {
+        let id = document.getElementById('newSupId').value.trim().toLowerCase();
+        let pass = document.getElementById('newSupPass').value.trim();
+        if(!id || !pass) { alert("ID aur Password bharein!"); return; }
         
-        supervisors.push({ id: id, pass: pass });
-        localStorage.setItem("supervisors", JSON.stringify(supervisors));
-        autoSyncToCloud();
-        renderLists();
-
-        document.getElementById("supId").value = "";
-        document.getElementById("supPass").value = "";
-    }
-
-    // Supervisor Delete karne ka function
-    function removeSupervisor(id) {
-        supervisors = supervisors.filter(sup => sup.id !== id);
-        localStorage.setItem("supervisors", JSON.stringify(supervisors));
-        autoSyncToCloud();
-        renderLists();
-    }
-
-    // Naya Labour Add karne ka function (Duplicate check ke sath)
-    function handleAddNewLabour() {
-        var empId = document.getElementById("labEmpId").value.trim();
-        var name = document.getElementById("labName").value.trim();
-
-        if(!empId || !name) {
-            alert("Kripya Employee ID aur Name dono bharein!");
-            return;
-        }
-
-        let exists = labours.some(lab => lab.empId === empId);
-        if(exists) {
-            alert("Yeh Labour ID pehle se maujood hai!");
-            return;
-        }
+        let sups = getStorage('supervisors', []);
+        if(sups.some(s => s.id === id)) { alert("Yeh ID pehle se hai!"); return; }
         
-        labours.push({ empId: empId, name: name });
-        localStorage.setItem("labours", JSON.stringify(labours));
-        autoSyncToCloud();
-        renderLists();
-
-        document.getElementById("labEmpId").value = "";
-        document.getElementById("labName").value = "";
+        sups.push({ id: id, pass: pass });
+        setStorage('supervisors', sups);
+        await autoSyncToCloud();
+        
+        document.getElementById('newSupId').value = '';
+        document.getElementById('newSupPass').value = '';
+        loadAdminData();
+        alert("✅ Supervisor Added & Synced!");
     }
 
-    // Labour Delete karne ka function
-    function removeLabour(empId) {
-        labours = labours.filter(lab => lab.empId !== empId);
-        localStorage.setItem("labours", JSON.stringify(labours));
+    function deleteSupervisor(id) {
+        let sups = getStorage('supervisors', []).filter(s => s.id !== id);
+        setStorage('supervisors', sups);
         autoSyncToCloud();
-        renderLists();
+        loadAdminData();
+    }
+
+    async function addLabour() {
+        let name = document.getElementById('labName').value.trim();
+        let empId = document.getElementById('labEmpId').value.trim();
+        if(!name || !empId) { alert("Name aur ID bharein!"); return; }
+        
+        let labs = getStorage('labours', []);
+        if(labs.some(l => l.empId === empId)) { alert("Yeh Labour ID pehle se hai!"); return; }
+        
+        labs.push({empId: empId, name: name});
+        setStorage('labours', labs);
+        await autoSyncToCloud();
+        
+        document.getElementById('labName').value = '';
+        document.getElementById('labEmpId').value = '';
+        loadAdminData();
+        alert("✅ Labour Added & Synced!");
+    }
+
+    function deleteLabour(empId) {
+        let labs = getStorage('labours', []).filter(l => l.empId !== empId);
+        setStorage('labours', labs);
+        autoSyncToCloud();
+        loadAdminData();
+    }
+
+    function deleteAttendanceLog(idx) {
+        let logs = getStorage('attendanceLogs', []);
+        logs.splice(idx, 1);
+        setStorage('attendanceLogs', logs);
+        loadAdminData();
+    }
+
+    function exportMonthlyExcel() {
+        let logs = getStorage('attendanceLogs', []);
+        if(logs.length === 0) { alert("No data!"); return; }
+        let csv = "Date,Site,Supervisor,Present,Total\n";
+        logs.forEach(l => { csv += `${l.date},${l.site},${l.sup},${l.presentCount},${l.totalCount}\n`; });
+        let blob = new Blob([csv], {type: "text/csv"});
+        let url = window.URL.createObjectURL(blob);
+        let a = document.createElement("a");
+        a.href = url; a.download = "Attendance_Report.csv"; a.click();
+    }
+
+    function loadAdminData() {
+        let labs = getStorage('labours', []);
+        let logs = getStorage('attendanceLogs', []);
+        let sups = getStorage('supervisors', []);
+        let reqs = getStorage('attendanceReqs', []);
+        
+        let todayStr = new Date().toISOString().split('T')[0];
+        document.getElementById('statTotalLabours').innerText = labs.length;
+        document.getElementById('statTodayPresent').innerText = logs.filter(l => l.date === todayStr).reduce((sum, l) => sum + (l.presentCount || 0), 0);
+
+        let supBox = document.getElementById('supTableBox');
+        supBox.innerHTML = '';
+        let sTable = document.createElement('table');
+        sTable.innerHTML = '<tr><th>ID</th><th>Pass</th><th>Act</th></tr>';
+        let defaultSupList = [{ id: 'supervisor1', pass: 'pass123' }, { id: 'supervisor2', pass: 'pass456' }, { id: 'siteincharge', pass: 'mseng2026' }];
+        defaultSupList.concat(sups).forEach(s => {
+            let tr = document.createElement('tr');
+            let isDefault = ['supervisor1','supervisor2','siteincharge'].includes(s.id);
+            tr.innerHTML = `<td>${s.id}</td><td>${s.pass}</td><td>${isDefault ? 'Default' : '<button class="btn-danger" onclick="deleteSupervisor(\''+s.id+'\')">X</button>'}</td>`;
+            sTable.appendChild(tr);
+        });
+        supBox.appendChild(sTable);
+
+        let labBox = document.getElementById('labTableBox');
+        labBox.innerHTML = '';
+        let lTable = document.createElement('table');
+        lTable.innerHTML = '<tr><th>ID</th><th>Name</th><th>Act</th></tr>';
+        labs.forEach(l => {
+            let tr = document.createElement('tr');
+            tr.innerHTML = `<td>${l.empId}</td><td>${l.name}</td><td><button class="btn-danger" onclick="deleteLabour('${l.empId}')">X</button></td>`;
+            lTable.appendChild(tr);
+        });
+        labBox.appendChild(lTable);
+
+        let reqBox = document.getElementById('adminReqTableBox');
+        reqBox.innerHTML = reqs.length ? '' : '<p style="margin:5px; font-size:13px; color:#666;">No pending requests.</p>';
+        if(reqs.length > 0) {
+            let rTable = document.createElement('table');
+            rTable.innerHTML = '<tr><th>Date</th><th>Sup</th><th>Labour</th><th>Reason</th><th>Action</th></tr>';
+            reqs.slice().reverse().forEach((r, i) => {
+                let tr = document.createElement('tr');
+                let actCell = r.status === 'Pending' ? 
+                    `<button class="btn-success" onclick="approveReq(${i})">✔</button> <button class="btn-danger" onclick="rejectReq(${i})">✖</button>` : 
+                    `<span style="font-weight:bold;">${r.status}</span>`;
+                tr.innerHTML = `<td>${r.date}</td><td>${r.sup}</td><td>${r.empName}</td><td>${r.reason}</td><td>${actCell}</td>`;
+                rTable.appendChild(tr);
+            });
+            reqBox.appendChild(rTable);
+        }
+
+        let searchQ = document.getElementById('searchLog').value.toLowerCase();
+        let repBox = document.getElementById('reportTableBox');
+        repBox.innerHTML = '';
+        let repTable = document.createElement('table');
+        repTable.innerHTML = '<tr><th>Date</th><th>Site</th><th>Supervisor</th><th>Present / Total</th><th>Action</th></tr>';
+        
+        logs.filter(l => !searchQ || l.date.toLowerCase().includes(searchQ) || l.site.toLowerCase().includes(searchQ)).slice().reverse().forEach((l, idx) => {
+            let tr = document.createElement('tr');
+            tr.innerHTML = `<td>${l.date}</td><td>${l.site}</td><td>${l.sup}</td><td>${l.presentCount} / ${l.totalCount}</td><td><button class="btn-danger" onclick="deleteAttendanceLog(${idx})">Delete</button></td>`;
+            repTable.appendChild(tr);
+        });
+        repBox.appendChild(repTable);
+    }
+
+    function loadSupervisorChecklist() {
+        let labs = getStorage('labours', []);
+        let container = document.getElementById('checklistContainer');
+        container.innerHTML = labs.length === 0 ? '<p style="color:#666; font-size:13px;">Koi labour nahi hai. Pehle Admin se labour add karwayein.</p>' : '';
+        
+        labs.forEach(l => {
+            let div = document.createElement('div');
+            div.style.cssText = "display:flex; align-items:center; margin-bottom:6px; background:#f1f5f9; padding:6px; border-radius:4px;";
+            div.innerHTML = `<input type="checkbox" class="lab-chk" value="${l.empId}" style="width:20px; height:20px; margin-right:10px;"> <span style="font-size:14px; font-weight:500;">${l.name} (${l.empId})</span>`;
+            container.appendChild(div);
+        });
+
+        let reqLabSelect = document.getElementById('reqLabour');
+        reqLabSelect.innerHTML = '';
+        labs.forEach(l => {
+            let opt = document.createElement('option');
+            opt.value = l.empId;
+            opt.innerText = `${l.name} (${l.empId})`;
+            reqLabSelect.appendChild(opt);
+        });
+    }
+
+    function submitAttendance() {
+        let date = document.getElementById('attendanceDate').value;
+        let site = document.getElementById('siteNameInput').value.trim();
+        if(!date || !site) { alert("Date aur Site Name zaroori hai!"); return; }
+
+        let checkboxes = document.querySelectorAll('.lab-chk:checked');
+        let presentIds = Array.from(checkboxes).map(cb => cb.value);
+        let totalLabs = getStorage('labours', []).length;
+
+        let logs = getStorage('attendanceLogs', []);
+        logs.push({
+            date: date,
+            site: site,
+            sup: activeUser.id,
+            presentCount: presentIds.length,
+            totalCount: totalLabs,
+            presentList: presentIds
+        });
+        setStorage('attendanceLogs', logs);
+        alert("✅ Attendance Successfully Submit Ho Gayi!");
+        document.getElementById('siteNameInput').value = '';
+        document.querySelectorAll('.lab-chk').forEach(cb => cb.checked = false);
+    }
+
+    function sendRequest() {
+        let date = document.getElementById('reqDate').value;
+        let empId = document.getElementById('reqLabour').value;
+        let reason = document.getElementById('reqReason').value.trim();
+        if(!date || !reason) { alert("Date aur Reason bharein!"); return; }
+
+        let labs = getStorage('labours', []);
+        let labObj = labs.find(l => l.empId === empId);
+        let reqs = getStorage('attendanceReqs', []);
+
+        reqs.push({
+            date: date,
+            sup: activeUser.id,
+            empId: empId,
+            empName: labObj ? labObj.name : empId,
+            reason: reason,
+            status: 'Pending'
+        });
+        setStorage('attendanceReqs', reqs);
+        document.getElementById('reqReason').value = '';
+        alert("📤 Request Admin ke paas bhej di gayi hai!");
+        loadSupervisorRequests();
+    }
+
+    function loadSupervisorRequests() {
+        let reqs = getStorage('attendanceReqs', []).filter(r => r.sup === activeUser.id);
+        let box = document.getElementById('myRequestsBox');
+        box.innerHTML = reqs.length === 0 ? 'Pichli koi request nahi hai.' : `<b>Aapki Requests:</b> ${reqs.length} total`;
+    }
+
+    function approveReq(idx) {
+        let reqs = getStorage('attendanceReqs', []);
+        reqs[idx].status = 'Approved';
+        setStorage('attendanceReqs', reqs);
+        loadAdminData();
+    }
+
+    function rejectReq(idx) {
+        let reqs = getStorage('attendanceReqs', []);
+        reqs[idx].status = 'Rejected';
+        setStorage('attendanceReqs', reqs);
+        loadAdminData();
     }
 </script>
 
