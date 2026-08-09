@@ -3,117 +3,348 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Site Attendance System</title>
+    <title>Site Attendance & Management System</title>
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background: #eef2f5; margin: 0; padding: 15px; color: #333; }
         .box { max-width: 980px; margin: auto; background: #fff; padding: 25px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         h2, h3 { color: #1a365d; margin-top: 10px; }
-        .field { margin-bottom: 15px; }
-        label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 14px; }
-        input, button { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; }
-        button { background: #0066cc; color: white; border: none; font-weight: bold; cursor: pointer; margin-top: 10px; }
-        button:hover { background: #005bb5; }
+        .field { margin-bottom: 12px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 13px; }
+        input, select, button { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; }
+        button { background: #0066cc; color: white; border: none; font-weight: bold; cursor: pointer; margin-top: 5px; border-radius: 6px; }
+        button:hover { opacity: 0.9; }
         .hidden { display: none !important; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; background: #fff; }
-        th, td { border: 1px solid #e2e8f0; padding: 10px; text-align: center; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; background: #fff; }
+        th, td { border: 1px solid #e2e8f0; padding: 8px; text-align: center; }
         th { background: #0066cc; color: white; }
-        .btn-danger { background: #e53e3e; width: auto; padding: 6px 12px; font-size: 12px; }
-        .btn-warning { background: #718096; width: auto; padding: 6px 12px; font-size: 12px; color: white; }
-        .login-card { max-width: 400px; margin: 30px auto; padding: 25px; border: 1px solid #cbd5e1; border-radius: 8px; background: #f8fafc; }
+        .btn-danger { background: #e53e3e; width: auto; padding: 5px 10px; font-size: 11px; }
+        .btn-warning { background: #718096; width: auto; padding: 5px 10px; font-size: 11px; color: white; }
+        .btn-success { background: #38a169; width: auto; padding: 5px 10px; font-size: 11px; }
+        .btn-photo { background: #805ad5; width: auto; padding: 5px 10px; font-size: 11px; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        .btn-wa { background: #25D366; width: auto; padding: 5px 10px; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .card { background: #f8fafc; padding: 15px; border: 1px solid #cbd5e1; border-radius: 8px; margin-bottom: 15px; }
+        
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 15px; }
+        .stat-card { padding: 15px; border-radius: 8px; color: white; text-align: center; }
+        .bg-blue { background: #3182ce; }
+        .bg-green { background: #38a169; }
+        .bg-red { background: #e53e3e; }
+
+        .login-card { max-width: 400px; margin: 30px auto; padding: 20px; border: 1px solid #cbd5e1; border-radius: 8px; background: #f8fafc; }
     </style>
 </head>
 <body>
 
 <div class="box">
-    <!-- 1. LOGIN SECTION -->
+    <!-- LOGIN SECTION -->
     <div id="loginSection">
-        <h2 style="text-align:center;">Site Attendance Management</h2>
+        <h2 style="text-align:center;">Site Attendance Management System</h2>
         
-        <!-- Yahan Form Tag Add Kiya Hai aur onsubmit handle kiya hai -->
         <form class="login-card" onsubmit="handleLogin(event)">
             <div class="field">
                 <label>User ID:</label>
-                <input type="text" id="uid" placeholder="admin ya sup1 daalein" required>
+                <input type="text" id="uid" placeholder="User ID daalein" required>
             </div>
             <div class="field">
                 <label>Password:</label>
                 <input type="password" id="upass" placeholder="Password daalein" required>
             </div>
             
-            <button type="submit" id="loginBtn">Login Karein</button>
+            <button type="submit">Login Karein</button>
 
-            <div style="margin-top:20px; text-align:center;">
-                <button type="button" class="btn-warning" style="width:100%;" onclick="resetSystem()">🔄 System Refresh (Agar fas jaye)</button>
+            <div style="margin-top:15px; text-align:center;">
+                <button type="button" class="btn-warning" style="width:100%; padding:8px;" onclick="resetSystemData()">🔄 System Refresh</button>
             </div>
         </form>
     </div>
 
-    <!-- 2. ADMIN PANEL -->
+    <!-- ADMIN PANEL -->
     <div id="adminPanel" class="hidden">
         <div style="display:flex; justify-content:space-between; align-items:center;">
-            <h2>Admin Master Panel</h2>
-            <button type="button" class="btn-danger" onclick="doLogout()">Logout</button>
+            <h2>Admin Master Panel - Mayank Chaudhary</h2>
+            <button type="button" class="btn-danger" style="padding:8px 15px;" onclick="doLogout()">Logout</button>
         </div>
-        <div style="padding: 20px; background: #e6fffa; border: 1px solid #319795; border-radius: 8px; margin-top: 20px;">
-            <h3 style="margin:0; color: #234e52;">Login Successful! Welcome Admin.</h3>
-            <p>Admin panel abhi test mode mein hai. Yahan aap baaki controls add kar sakte hain.</p>
+        
+        <!-- OVERVIEW COUNTERS -->
+        <div class="stats-grid">
+            <div class="stat-card bg-blue">
+                <h4 style="margin:0; font-size:13px; text-transform:uppercase;">Total Registered Labours</h4>
+                <h2 id="statTotalLabours" style="margin:8px 0 0 0; color:white; font-size:26px;">0</h2>
+            </div>
+            <div class="stat-card bg-green">
+                <h4 style="margin:0; font-size:13px; text-transform:uppercase;">Aaj Ke Total Present</h4>
+                <h2 id="statTodayPresent" style="margin:8px 0 0 0; color:white; font-size:26px;">0</h2>
+            </div>
+            <div class="stat-card bg-red">
+                <h4 style="margin:0; font-size:13px; text-transform:uppercase;">Aaj Ke Total Absent</h4>
+                <h2 id="statTodayAbsent" style="margin:8px 0 0 0; color:white; font-size:26px;">0</h2>
+            </div>
+        </div>
+
+        <!-- LABOUR MANAGEMENT -->
+        <div class="card">
+            <h3>Labour Master List (Add / Edit / Remove)</h3>
+            <div style="display:flex; gap:10px; margin-bottom:10px;">
+                <input type="text" id="labName" placeholder="Labour Naam">
+                <input type="text" id="labEmpId" placeholder="Labour ID (eg: L001)">
+                <button type="button" class="btn-success" onclick="addLabour()">Labour Save Karein</button>
+            </div>
+            <div id="labTableBox"></div>
+        </div>
+
+        <!-- SUPERVISOR MANAGEMENT -->
+        <div class="card">
+            <h3>Supervisor Management</h3>
+            <div style="display:flex; gap:10px; margin-bottom:10px;">
+                <input type="text" id="newSupId" placeholder="Supervisor ID">
+                <input type="password" id="newSupPass" placeholder="Password">
+                <button type="button" class="btn-success" onclick="addSupervisor()">Supervisor Add Karein</button>
+            </div>
+            <div id="supTableBox"></div>
+        </div>
+
+        <!-- ATTENDANCE REPORTS & EDIT CONTROL -->
+        <div class="card">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                <h3>Date-Wise Attendance Master Control</h3>
+                <div>
+                    <button type="button" class="btn-success" onclick="exportMonthlyExcel()">📊 Download Monthly CSV</button>
+                </div>
+            </div>
+            <div id="reportTableBox" style="overflow-x:auto;"></div>
         </div>
     </div>
 
-    <!-- 3. SUPERVISOR PANEL -->
+    <!-- SUPERVISOR PANEL -->
     <div id="supervisorPanel" class="hidden">
         <div style="display:flex; justify-content:space-between; align-items:center;">
-            <h2 id="supWelcome">Supervisor Panel</h2>
-            <button type="button" class="btn-danger" onclick="doLogout()">Logout</button>
+            <h2 id="supWelcome">Supervisor</h2>
+            <button type="button" class="btn-danger" style="padding:8px 15px;" onclick="doLogout()">Logout</button>
         </div>
-        <div style="padding: 20px; background: #ebf8ff; border: 1px solid #3182ce; border-radius: 8px; margin-top: 20px;">
-            <h3 style="margin:0; color: #2a4365;">Login Successful! Welcome Supervisor.</h3>
-            <p>Yahan se site attendance enter hogi.</p>
+
+        <div class="card">
+            <h3>Daily Attendance Entry</h3>
+            <div class="field">
+                <label>Date:</label>
+                <input type="date" id="attendanceDate">
+            </div>
+            <div class="field">
+                <label>Site Name:</label>
+                <input type="text" id="siteNameInput" placeholder="e.g., Electrical Main Site">
+            </div>
+
+            <div class="field">
+                <label>Attendance Checklist:</label>
+                <div id="checklistContainer" style="max-height:220px; overflow-y:auto; border:1px solid #ddd; padding:8px; background:#fff; border-radius:6px;"></div>
+            </div>
+
+            <button type="button" onclick="submitAttendance()">Attendance Submit Karein</button>
         </div>
     </div>
 </div>
 
 <script>
-    // System Reset Function
-    function resetSystem() {
-        localStorage.clear();
-        alert("Cache clear ho gaya hai! Page reload ho raha hai.");
-        window.location.reload();
+    // Storage Helpers
+    function getStorage(key, fallback) {
+        try { let item = localStorage.getItem(key); return item ? JSON.parse(item) : fallback; } 
+        catch (e) { return fallback; }
+    }
+    function setStorage(key, val) {
+        try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) {}
     }
 
-    // Main Login Logic (No Refresh)
+    let activeUser = null;
+
+    // Bulletproof Login Logic
     function handleLogin(event) {
-        // Yeh line page ko reload hone se rokti hai
         event.preventDefault(); 
         
-        let id = document.getElementById('uid').value.trim().toLowerCase();
-        let pass = document.getElementById('upass').value.trim();
+        let idVal = document.getElementById('uid').value;
+        let passVal = document.getElementById('upass').value;
+        let id = idVal ? idVal.trim().toLowerCase() : '';
+        let pass = passVal ? passVal.trim() : '';
 
-        // Testing credentials
+        // Admin Auth
         if (id === 'admin' && pass === 'admin123') {
+            activeUser = { role: 'admin', id: 'admin' };
             document.getElementById('loginSection').classList.add('hidden');
             document.getElementById('adminPanel').classList.remove('hidden');
-        } 
-        else if (id === 'sup1' && pass === '1234') {
+            loadAdminData();
+            return;
+        }
+
+        // Supervisor Auth
+        let supervisors = getStorage('supervisors', []);
+        let found = supervisors.find(s => s.id.toLowerCase() === id && s.pass === pass);
+        
+        if (id === 'sup1' && pass === '1234') { found = { id: 'sup1' }; } // Default Supervisor
+
+        if (found) {
+            activeUser = { role: 'supervisor', id: found.id };
             document.getElementById('loginSection').classList.add('hidden');
             document.getElementById('supervisorPanel').classList.remove('hidden');
-            document.getElementById('supWelcome').innerText = "Supervisor: sup1";
-        } 
-        else {
-            alert('Galat ID ya Password!\n\nAdmin ke liye: admin / admin123\nSupervisor ke liye: sup1 / 1234');
+            document.getElementById('supWelcome').innerText = "Supervisor: " + found.id;
+            document.getElementById('attendanceDate').value = new Date().toISOString().split('T')[0];
+            loadSupervisorChecklist();
+        } else {
+            alert('Galat Credentials!\nAdmin: admin / admin123\nSupervisor: sup1 / 1234');
         }
     }
 
-    // Logout Function
+    function resetSystemData() {
+        if(confirm("Kya aap poora system data clear karna chahte hain?")) {
+            localStorage.clear();
+            alert("System Refresh Ho Gaya Hai!");
+            location.reload();
+        }
+    }
+
     function doLogout() {
+        activeUser = null;
         document.getElementById('uid').value = '';
         document.getElementById('upass').value = '';
         document.getElementById('loginSection').classList.remove('hidden');
         document.getElementById('adminPanel').classList.add('hidden');
         document.getElementById('supervisorPanel').classList.add('hidden');
     }
-</script>
 
+    // --- ADMIN FUNCTIONS ---
+    function addLabour() {
+        let name = document.getElementById('labName').value.trim();
+        let empId = document.getElementById('labEmpId').value.trim();
+        if(!name || !empId) { alert('Naam aur ID dono bharein!'); return; }
+        
+        let labs = getStorage('labours', []);
+        labs.push({empId: empId, name: name});
+        setStorage('labours', labs);
+        document.getElementById('labName').value = '';
+        document.getElementById('labEmpId').value = '';
+        loadAdminData();
+    }
+
+    function deleteLabour(empId) {
+        if(confirm(`Kya aap ID: ${empId} ko master list se nikalna chahte hain?`)) {
+            let labs = getStorage('labours', []).filter(l => l.empId !== empId);
+            setStorage('labours', labs);
+            loadAdminData();
+        }
+    }
+
+    function addSupervisor() {
+        let id = document.getElementById('newSupId').value.trim();
+        let pass = document.getElementById('newSupPass').value.trim();
+        if(!id || !pass) { alert('ID aur Password dono bharein!'); return; }
+        
+        let sups = getStorage('supervisors', []);
+        sups.push({id: id, pass: pass});
+        setStorage('supervisors', sups);
+        document.getElementById('newSupId').value = '';
+        document.getElementById('newSupPass').value = '';
+        loadAdminData();
+    }
+
+    function loadAdminData() {
+        let labs = getStorage('labours', []);
+        let logs = getStorage('attendanceLogs', []);
+        let sups = getStorage('supervisors', []);
+
+        // Update Stats
+        let todayStr = new Date().toISOString().split('T')[0];
+        let todayLogs = logs.filter(l => l.date === todayStr);
+        let todayPresent = todayLogs.reduce((sum, l) => sum + (l.presentCount || 0), 0);
+        let totalRegistered = labs.length;
+        
+        document.getElementById('statTotalLabours').innerText = totalRegistered;
+        document.getElementById('statTodayPresent').innerText = todayPresent;
+        document.getElementById('statTodayAbsent').innerText = totalRegistered > todayPresent ? (totalRegistered - todayPresent) : 0;
+
+        // Render Labour Table
+        let lHtml = '<table><tr><th>ID</th><th>Labour Name</th><th>Admin Actions</th></tr>';
+        labs.forEach(l => {
+            lHtml += `<tr><td>${l.empId}</td><td><b>${l.name}</b></td>
+                      <td><button type="button" class="btn-danger" onclick="deleteLabour('${l.empId}')">Remove</button></td></tr>`;
+        });
+        lHtml += '</table>';
+        document.getElementById('labTableBox').innerHTML = labs.length ? lHtml : '<p>Master List Khali Hai.</p>';
+
+        // Render Reports
+        let rHtml = '<table><tr><th>Date & Site</th><th>Supervisor</th><th>Present / Total</th><th>Share</th></tr>';
+        logs.forEach((l, idx) => {
+            rHtml += `<tr>
+                <td><b>${l.date}</b><br><small>${l.site}</small></td>
+                <td>${l.sup}</td>
+                <td><b>${l.presentCount}</b> / ${l.totalCount}</td>
+                <td><button type="button" class="btn-wa" onclick="shareWhatsApp(${idx})">WhatsApp</button></td>
+            </tr>`;
+        });
+        rHtml += '</table>';
+        document.getElementById('reportTableBox').innerHTML = logs.length ? rHtml : '<p>Koi Attendance Record Nahi Hai.</p>';
+    }
+
+    // --- SUPERVISOR FUNCTIONS ---
+    function loadSupervisorChecklist() {
+        let labs = getStorage('labours', []);
+        let box = document.getElementById('checklistContainer');
+        if(labs.length === 0) {
+            box.innerHTML = '<p style="color:red;">Admin ne abhi tak koi labour add nahi kiya hai.</p>';
+            return;
+        }
+        let html = '<table>';
+        labs.forEach(l => {
+            html += `<tr>
+                <td style="width:30px;"><input type="checkbox" class="chkBox" data-empid="${l.empId}" data-name="${l.name}"></td>
+                <td style="text-align:left;"><b>${l.name}</b> (${l.empId})</td>
+            </tr>`;
+        });
+        html += '</table>';
+        box.innerHTML = html;
+    }
+
+    function submitAttendance() {
+        let date = document.getElementById('attendanceDate').value;
+        let site = document.getElementById('siteNameInput').value.trim();
+        let labs = getStorage('labours', []);
+
+        if(!date || !site) { alert('Date aur Site Name zaruri hai!'); return; }
+
+        let presentCount = 0;
+        let details = [];
+        document.querySelectorAll('.chkBox').forEach(cb => {
+            if(cb.checked) presentCount++;
+            details.push({ empId: cb.getAttribute('data-empid'), status: cb.checked ? 'Present' : 'Absent' });
+        });
+
+        let logs = getStorage('attendanceLogs', []);
+        logs.unshift({ date: date, site: site, sup: activeUser.id, presentCount: presentCount, totalCount: labs.length });
+        setStorage('attendanceLogs', logs);
+
+        alert('Attendance Successfully Submit Ho Gayi!');
+        document.getElementById('siteNameInput').value = '';
+        document.querySelectorAll('.chkBox').forEach(cb => cb.checked = false);
+    }
+
+    function shareWhatsApp(idx) {
+        let logs = getStorage('attendanceLogs', []);
+        let data = logs[idx];
+        if(!data) return;
+        let msg = `*Site Attendance Report*\n📅 Date: ${data.date}\n🏗️ Site: ${data.site}\n👤 Supervisor: ${data.sup}\n📊 Attendance: ${data.presentCount}/${data.totalCount} Present`;
+        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
+    }
+
+    function exportMonthlyExcel() {
+        let logs = getStorage('attendanceLogs', []);
+        if(logs.length === 0) { alert('Download karne ke liye koi data nahi hai!'); return; }
+        
+        let csvContent = "Date,Site Name,Supervisor,Total Present,Total Registered\n";
+        logs.forEach(l => { csvContent += `"${l.date}","${l.site}","${l.sup}","${l.presentCount}","${l.totalCount}"\n`; });
+        
+        let blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        let link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = `Attendance_Report.csv`;
+        link.click();
+    }
+</script>
 </body>
 </html>
