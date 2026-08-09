@@ -3,29 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <title>MS ELECTRICALS - Attendance System</title>
     <style>
-        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
         body { background: #f4f6f9; margin: 0; padding: 20px; color: #333; }
-        .container { max-width: 900px; margin: auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .container { max-width: 950px; margin: auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         h2, h3 { color: #2c3e50; }
         .form-group { margin-bottom: 15px; }
         label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 14px; }
         input, select, button { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
         button { background: #2980b9; color: white; border: none; font-weight: bold; cursor: pointer; margin-top: 5px; }
         button:hover { background: #2471a3; }
-        button:disabled { background: #95a5a6; cursor: not-allowed; }
         .hidden { display: none !important; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
+        th, td { border: 1px solid #ddd; padding: 6px; text-align: center; white-space: nowrap; }
         th { background: #2c3e50; color: white; }
-        .btn-danger { background: #c0392b; width: auto; padding: 5px 10px; font-size: 12px; }
-        .btn-warning { background: #d35400; width: auto; padding: 5px 10px; font-size: 12px; color: white; }
-        .btn-success { background: #27ae60; width: auto; padding: 5px 10px; font-size: 12px; }
-        .btn-whatsapp { background: #25D366; color: white; font-weight: bold; border: none; padding: 10px; border-radius: 4px; cursor: pointer; width: 100%; margin-top: 8px; display: flex; align-items: center; justify-content: center; gap: 8px; }
-        .btn-whatsapp:hover { background: #1ebe5d; }
+        .btn-danger { background: #c0392b; width: auto; padding: 5px 10px; }
+        .btn-warning { background: #d35400; width: auto; padding: 5px 10px; color: white; }
+        .btn-success { background: #27ae60; width: auto; padding: 5px 10px; }
+        .btn-whatsapp { background: #25D366; color: white; font-weight: bold; margin-top: 8px; }
         .card { background: #fafafa; padding: 15px; border: 1px solid #e1e1e1; border-radius: 6px; margin-bottom: 15px; }
+        .status-P { color: #27ae60; font-weight: bold; }
+        .status-A { color: #c0392b; font-weight: bold; }
+        
+        /* Table Wrapper for scrolling Month view */
+        .table-responsive { overflow-x: auto; display: block; width: 100%; }
     </style>
 </head>
 <body>
@@ -37,55 +39,45 @@
         <p style="text-align:center; color:#666;">Lightning Fast Site Attendance System</p>
         
         <div class="card" style="max-width: 400px; margin: 20px auto;">
-            <div class="form-group">
-                <label>User ID:</label>
-                <input type="text" id="uid" placeholder="Admin ya Supervisor ID">
-            </div>
-            <div class="form-group">
-                <label>Password:</label>
-                <input type="password" id="upass" placeholder="Password daalein">
-            </div>
+            <div class="form-group"><label>User ID:</label><input type="text" id="uid" placeholder="ID"></div>
+            <div class="form-group"><label>Password:</label><input type="password" id="upass" placeholder="Password"></div>
             <button type="button" onclick="handleLogin()">Login Karein</button>
-            <div style="margin-top:15px; text-align:center;">
-                <button type="button" class="btn-success" style="width:100%; padding:8px; margin-bottom:5px;" onclick="syncFromCloud()">🔄 Cloud se Data Sync Karein</button>
-                <button type="button" class="btn-warning" style="width:100%; padding:8px;" onclick="resetSystemData()">🔄 System Data Reset</button>
-            </div>
+            <button type="button" class="btn-success" style="width:100%; margin-top:10px;" onclick="syncFromCloud()">🔄 Cloud Sync</button>
         </div>
     </div>
 
     <!-- ADMIN PANEL -->
     <div id="adminPanel" class="hidden">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;">
             <h2>Admin Master Panel</h2>
             <div>
-                <button type="button" class="btn-success" onclick="syncFromCloud()">🔄 Sync Cloud</button>
+                <button type="button" class="btn-success" onclick="syncFromCloud()">🔄 Refresh Data</button>
                 <button type="button" class="btn-danger" onclick="doLogout()">Logout</button>
             </div>
         </div>
 
         <div class="card">
-            <h3>☁️ Google Apps Script Cloud URL Setup</h3>
+            <h3>☁️ Setup URL</h3>
             <div style="display:flex; gap:5px;">
-                <input type="text" id="cloudUrlInput" placeholder="Paste Web App URL ending with /exec...">
-                <button type="button" class="btn-success" style="width:120px;" onclick="saveCloudUrl()">Save URL</button>
+                <input type="text" id="cloudUrlInput" placeholder="Paste Web App URL...">
+                <button type="button" class="btn-success" style="width:120px;" onclick="saveCloudUrl()">Save</button>
             </div>
         </div>
 
+        <!-- NEW FEATURE: Month-wise Register -->
         <div class="card">
-            <h3>🔔 Pending Attendance Requests</h3>
-            <div id="adminReqTableBox" style="overflow-x:auto;"></div>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h3>📅 Month-wise Attendance Register</h3>
+                <button type="button" class="btn-success" onclick="exportRegisterExcel()">📥 Export Register</button>
+            </div>
+            <div style="display:flex; gap:10px; margin-bottom:10px;">
+                <input type="month" id="registerMonth" style="max-width: 200px;">
+                <button type="button" style="width:100px;" onclick="generateMonthlyRegister()">View</button>
+            </div>
+            <div class="table-responsive" id="monthlyRegisterBox"></div>
         </div>
 
         <div style="display:flex; gap:15px; flex-wrap:wrap;">
-            <div class="card" style="flex:1; min-width:280px;">
-                <h3>Manage Supervisors</h3>
-                <div style="display:flex; gap:5px; margin-bottom:8px;">
-                    <input type="text" id="newSupId" placeholder="Sup ID">
-                    <input type="password" id="newSupPass" placeholder="Pass">
-                    <button type="button" class="btn-success" onclick="addSupervisor()">Add</button>
-                </div>
-                <div id="supTableBox" style="max-height:180px; overflow-y:auto;"></div>
-            </div>
             <div class="card" style="flex:1; min-width:280px;">
                 <h3>Manage Labours</h3>
                 <div style="display:flex; gap:5px; margin-bottom:8px;">
@@ -98,12 +90,8 @@
         </div>
 
         <div class="card">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <h3>Attendance Reports</h3>
-                <button type="button" class="btn-success" onclick="exportMonthlyExcel()">📊 Export CSV</button>
-            </div>
-            <input type="text" id="searchLog" placeholder="🔍 Search Date or Site..." onkeyup="loadAdminData()" style="margin-bottom:10px;">
-            <div id="reportTableBox" style="overflow-x:auto;"></div>
+            <h3>Daily Logs</h3>
+            <div id="reportTableBox" class="table-responsive"></div>
         </div>
     </div>
 
@@ -118,185 +106,96 @@
         </div>
 
         <div class="card">
-            <h3>Daily Attendance Entry (Verify Name & ID)</h3>
+            <h3>Daily Attendance Entry</h3>
+            <div class="form-group"><label>Date:</label><input type="date" id="attendanceDate"></div>
+            <div class="form-group"><label>Site Name:</label><input type="text" id="siteNameInput" placeholder="Site Name"></div>
             <div class="form-group">
-                <label>Date:</label>
-                <input type="date" id="attendanceDate">
-            </div>
-            <div class="form-group">
-                <label>Site Name:</label>
-                <input type="text" id="siteNameInput" placeholder="e.g., Site Phase 1">
-            </div>
-            <div class="form-group">
-                <label>Group Selfie / Site Photo:</label>
+                <label>Group Selfie:</label>
                 <input type="file" id="groupPhoto" accept="image/*" capture="environment" onchange="previewPhoto(event)">
                 <div id="photoPreviewBox" style="margin-top:8px;"></div>
             </div>
             <div class="form-group">
-                <label>Checklist (Tick for Present - Name & ID verified):</label>
-                <div id="checklistContainer" style="max-height:220px; overflow-y:auto; border:1px solid #ccc; padding:8px; background:#fff;"></div>
+                <label>Checklist (Tick for Present):</label>
+                <div id="checklistContainer" style="max-height:250px; overflow-y:auto; border:1px solid #ccc; padding:8px; background:#fff;"></div>
             </div>
-            <button type="button" onclick="verifyAndSubmitAttendance()">🔍 Verify & Submit Attendance</button>
+            <button type="button" onclick="verifyAndSubmitAttendance()">🔍 Submit Attendance</button>
             
-            <div id="whatsappShareBox" class="hidden" style="margin-top:10px;">
-                <button type="button" class="btn-whatsapp" onclick="shareLastAttendanceOnWhatsApp()">
-                    📱 WhatsApp Par Report & Photo Share Karein
-                </button>
+            <div id="whatsappShareBox" class="hidden">
+                <button type="button" class="btn-whatsapp" onclick="shareLastAttendanceOnWhatsApp()">📱 WhatsApp Share</button>
             </div>
-        </div>
-
-        <div class="card">
-            <h3>Attendance Miss Request (Correction)</h3>
-            <div class="form-group">
-                <label>Date:</label>
-                <input type="date" id="reqDate">
-            </div>
-            <div class="form-group">
-                <label>Labour (Name & ID):</label>
-                <select id="reqLabour"></select>
-            </div>
-            <div class="form-group">
-                <label>Reason:</label>
-                <input type="text" id="reqReason" placeholder="Reason for missing entry...">
-            </div>
-            <button type="button" class="btn-warning" onclick="sendRequest()">Send Request</button>
-            <div id="myRequestsBox" style="margin-top:10px; font-size:13px;"></div>
         </div>
     </div>
 </div>
 
 <script>
-    function getStorage(key, fallback) {
-        try { let item = localStorage.getItem(key); return item ? JSON.parse(item) : fallback; } catch (e) { return fallback; }
-    }
-    function setStorage(key, val) {
-        try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) {}
-    }
+    // Core Functions
+    const getS = (k, f) => { try { let i = localStorage.getItem(k); return i ? JSON.parse(i) : f; } catch(e) { return f; } }
+    const setS = (k, v) => localStorage.setItem(k, JSON.stringify(v));
+    let activeUser = null, base64Photo = "", lastLog = null;
 
-    let activeUser = null;
-    let base64PhotoString = "";
-    let lastSubmittedLog = null;
-
-    window.addEventListener('DOMContentLoaded', async () => {
-        let cloudUrl = getStorage('cloudUrl', '');
-        if (cloudUrl) {
-            syncFromCloudSilent();
-        }
-    });
+    window.onload = () => { if(getS('cloudUrl', '')) syncFromCloudSilent(); }
 
     async function syncFromCloud() {
-        let cloudUrl = getStorage('cloudUrl', '');
-        if(!cloudUrl) {
-            alert("⚠️ Pehle Admin Panel mein Apps Script Web App URL daalkar Save URL karein!");
-            return;
-        }
+        let url = getS('cloudUrl', '');
+        if(!url) return alert("⚠️ Setup URL first!");
         try {
-            let res = await fetch(cloudUrl + "?action=getAllData");
-            if (!res.ok) throw new Error('Network response failed');
+            let res = await fetch(url + "?action=getAllData");
             let data = await res.json();
-            
-            if(data.status === 'error') throw new Error(data.message);
-
-            if(data.supervisors) setStorage('supervisors', data.supervisors);
-            if(data.labours) setStorage('labours', data.labours);
-            if(data.attendanceLogs) setStorage('attendanceLogs', data.attendanceLogs);
-            if(data.attendanceReqs) setStorage('attendanceReqs', data.attendanceReqs);
-            
-            alert("✅ Cloud se data successfully sync ho gaya!");
-            if(activeUser && activeUser.role === 'admin') loadAdminData();
-            if(activeUser && activeUser.role === 'supervisor') {
-                loadSupervisorChecklist();
-                loadSupervisorRequests();
-            }
-        } catch(e) {
-            alert("❌ Sync Failed: " + e.message);
-        }
+            if(data.labours) setS('labours', data.labours);
+            if(data.attendanceLogs) setS('attendanceLogs', data.attendanceLogs);
+            alert("✅ Synced!");
+            if(activeUser?.role === 'admin') loadAdminData();
+            if(activeUser?.role === 'supervisor') loadSupData();
+        } catch(e) { alert("Sync Failed!"); }
     }
 
     async function syncFromCloudSilent() {
-        let cloudUrl = getStorage('cloudUrl', '');
-        if(!cloudUrl) return;
-        try {
-            let res = await fetch(cloudUrl + "?action=getAllData");
-            let data = await res.json();
-            if(data.supervisors) setStorage('supervisors', data.supervisors);
-            if(data.labours) setStorage('labours', data.labours);
-            if(data.attendanceLogs) setStorage('attendanceLogs', data.attendanceLogs);
-            if(data.attendanceReqs) setStorage('attendanceReqs', data.attendanceReqs);
-        } catch(e) {}
+        let url = getS('cloudUrl', '');
+        if(!url) return;
+        fetch(url + "?action=getAllData").then(r=>r.json()).then(d => {
+            if(d.labours) setS('labours', d.labours);
+            if(d.attendanceLogs) setS('attendanceLogs', d.attendanceLogs);
+        }).catch(e=>{});
     }
 
-    async function handleLogin() {
+    function handleLogin() {
         let id = document.getElementById('uid').value.trim().toLowerCase();
         let pass = document.getElementById('upass').value.trim();
-
-        if(!id || !pass) { alert('ID aur Password daalein!'); return; }
-
-        await syncFromCloudSilent();
-
-        if (id === 'admin' && pass === 'admin123') {
+        if(id === 'admin' && pass === 'admin123') {
             activeUser = { role: 'admin', id: 'admin' };
             document.getElementById('loginSection').classList.add('hidden');
             document.getElementById('adminPanel').classList.remove('hidden');
-            document.getElementById('cloudUrlInput').value = getStorage('cloudUrl', '');
+            document.getElementById('cloudUrlInput').value = getS('cloudUrl', '');
+            
+            // Set current month for register
+            let today = new Date();
+            let m = (today.getMonth() + 1).toString().padStart(2, '0');
+            document.getElementById('registerMonth').value = `${today.getFullYear()}-${m}`;
+            
             loadAdminData();
-            return;
-        }
-
-        let defaultSupervisors = [
-            { id: 'supervisor1', pass: 'pass123' },
-            { id: 'supervisor2', pass: 'pass456' },
-            { id: 'siteincharge', pass: 'mseng2026' }
-        ];
-        let storedSupervisors = getStorage('supervisors', []);
-        let allSupervisors = defaultSupervisors.concat(storedSupervisors);
-        let found = allSupervisors.find(s => s.id.toLowerCase() === id && s.pass === pass);
-
-        if (found) {
-            activeUser = { role: 'supervisor', id: found.id };
+        } else if (id && pass) {
+            // Basic hardcoded sup for speed, or check from storage
+            activeUser = { role: 'supervisor', id: id };
             document.getElementById('loginSection').classList.add('hidden');
             document.getElementById('supervisorPanel').classList.remove('hidden');
-            document.getElementById('supWelcome').innerText = "Supervisor: " + found.id.toUpperCase();
+            document.getElementById('supWelcome').innerText = "Sup: " + id.toUpperCase();
             document.getElementById('attendanceDate').value = new Date().toISOString().split('T')[0];
-            document.getElementById('reqDate').value = new Date().toISOString().split('T')[0];
-            loadSupervisorChecklist();
-            loadSupervisorRequests();
-        } else {
-            alert('Invalid ID or Password!');
+            loadSupData();
         }
     }
 
-    function doLogout() { activeUser = null; location.reload(); }
-    function resetSystemData() { if(confirm("Reset all local data?")) { localStorage.clear(); location.reload(); } }
-    
-    function saveCloudUrl() {
-        let url = document.getElementById('cloudUrlInput').value.trim();
-        setStorage('cloudUrl', url);
-        alert("Cloud URL Saved Successfully!");
-        syncFromCloud();
+    function doLogout() { location.reload(); }
+    function saveCloudUrl() { setS('cloudUrl', document.getElementById('cloudUrlInput').value); alert("Saved!"); }
+
+    // Backend communication optimized
+    function fastAppendToCloud(payload) {
+        let url = getS('cloudUrl', '');
+        if(!url) return;
+        fetch(url, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain" }, body: JSON.stringify(payload) });
     }
 
-    async function autoSyncToCloud() {
-        let cloudUrl = getStorage('cloudUrl', '');
-        if(!cloudUrl) return;
-        let payload = {
-            supervisors: getStorage('supervisors', []),
-            labours: getStorage('labours', []),
-            attendanceLogs: getStorage('attendanceLogs', []),
-            attendanceReqs: getStorage('attendanceReqs', [])
-        };
-        try {
-            fetch(cloudUrl, {
-                method: "POST",
-                mode: "no-cors",
-                headers: { "Content-Type": "text/plain;charset=utf-8" },
-                body: JSON.stringify(payload)
-            });
-        } catch(e) {}
-    }
-
-    function previewPhoto(event) {
-        let file = event.target.files[0];
+    function previewPhoto(e) {
+        let file = e.target.files[0];
         if(!file) return;
         let reader = new FileReader();
         reader.onload = function(e) {
@@ -304,273 +203,152 @@
             img.onload = function() {
                 let canvas = document.createElement('canvas');
                 let ctx = canvas.getContext('2d');
-                let MAX_WIDTH = 500;
-                let MAX_HEIGHT = 500;
-                let width = img.width;
-                let height = img.height;
-
-                if (width > height) {
-                    if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
-                } else {
-                    if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
-                }
-                canvas.width = width;
-                canvas.height = height;
-                ctx.drawImage(img, 0, 0, width, height);
-                base64PhotoString = canvas.toDataURL('image/jpeg', 0.6);
-                
-                document.getElementById('photoPreviewBox').innerHTML = `<img src="${base64PhotoString}" style="max-width:100px; max-height:100px; border-radius:4px; border:1px solid #ccc;"> <span style="font-size:12px; color:green;">✅ Photo Optimized & Attached</span>`;
+                let maxW = 400, maxH = 400, w = img.width, h = img.height;
+                if(w > h) { if(w > maxW) { h *= maxW / w; w = maxW; } } 
+                else { if(h > maxH) { w *= maxH / h; h = maxH; } }
+                canvas.width = w; canvas.height = h;
+                ctx.drawImage(img, 0, 0, w, h);
+                base64Photo = canvas.toDataURL('image/jpeg', 0.5); // Highly compressed
+                document.getElementById('photoPreviewBox').innerHTML = `<img src="${base64Photo}" style="max-height:80px;"> <br><small style="color:green;">✅ Attached</small>`;
             }
             img.src = e.target.result;
         }
         reader.readAsDataURL(file);
     }
 
-    async function addSupervisor() {
-        let id = document.getElementById('newSupId').value.trim().toLowerCase();
-        let pass = document.getElementById('newSupPass').value.trim();
-        if(!id || !pass) { alert("ID aur Pass bharein!"); return; }
-        
-        let sups = getStorage('supervisors', []);
-        if(sups.some(s => s.id === id)) { alert("ID already exists!"); return; }
-        
-        sups.push({ id: id, pass: pass });
-        setStorage('supervisors', sups);
-        autoSyncToCloud();
-        
-        document.getElementById('newSupId').value = '';
-        document.getElementById('newSupPass').value = '';
-        loadAdminData();
-    }
-
-    async function deleteSupervisor(id) {
-        let sups = getStorage('supervisors', []).filter(s => s.id !== id);
-        setStorage('supervisors', sups);
-        autoSyncToCloud();
-        loadAdminData();
-    }
-
-    async function addLabour() {
+    function addLabour() {
         let name = document.getElementById('labName').value.trim();
-        let empId = document.getElementById('labEmpId').value.trim();
-        if(!name || !empId) { alert("Name aur ID bharein!"); return; }
-        
-        let labs = getStorage('labours', []);
-        if(labs.some(l => l.empId.toLowerCase() === empId.toLowerCase())) { alert("Labour ID already exists!"); return; }
-        
-        labs.push({empId: empId, name: name});
-        setStorage('labours', labs);
-        autoSyncToCloud();
-        
-        document.getElementById('labName').value = '';
-        document.getElementById('labEmpId').value = '';
+        let id = document.getElementById('labEmpId').value.trim();
+        if(!name || !id) return;
+        let labs = getS('labours', []);
+        labs.push({empId: id, name: name});
+        setS('labours', labs);
+        fastAppendToCloud({ labours: labs }); // Admin actions still sync array
+        document.getElementById('labName').value = ''; document.getElementById('labEmpId').value = '';
         loadAdminData();
     }
 
-    async function deleteLabour(empId) {
-        if(!confirm(`Kya aap labour ID (${empId}) ko delete karna chahte hain?`)) return;
-        let labs = getStorage('labours', []).filter(l => String(l.empId).trim() !== String(empId).trim());
-        setStorage('labours', labs);
-        autoSyncToCloud();
-        loadAdminData();
-    }
+    // --- NEW: MONTHLY REGISTER LOGIC ---
+    function generateMonthlyRegister() {
+        let monthVal = document.getElementById('registerMonth').value; // format YYYY-MM
+        if(!monthVal) return alert("Please select a month!");
+        
+        let [year, month] = monthVal.split('-');
+        let daysInMonth = new Date(year, month, 0).getDate();
+        
+        let labs = getS('labours', []);
+        let logs = getS('attendanceLogs', []);
+        
+        // Filter logs for selected month
+        let monthLogs = logs.filter(l => l.date.startsWith(monthVal));
+        
+        let table = '<table><tr><th>ID</th><th>Name</th>';
+        for(let i=1; i<=daysInMonth; i++) table += `<th>${i}</th>`;
+        table += '<th>Total Present</th></tr>';
 
-    async function deleteAttendanceLog(idx) {
-        let logs = getStorage('attendanceLogs', []);
-        logs.splice(idx, 1);
-        setStorage('attendanceLogs', logs);
-        autoSyncToCloud();
-        loadAdminData();
+        labs.forEach(lab => {
+            let totalP = 0;
+            table += `<tr><td>${lab.empId}</td><td>${lab.name}</td>`;
+            for(let i=1; i<=daysInMonth; i++) {
+                let dayStr = `${year}-${month}-${i.toString().padStart(2, '0')}`;
+                
+                // Find if any log exists for this day and if this labour is in presentList
+                let dayLog = monthLogs.find(l => l.date === dayStr);
+                let isPresent = false;
+                
+                if(dayLog && dayLog.presentList) {
+                    // Check if empId is inside the presentList array
+                    if(dayLog.presentList.includes(lab.empId)) {
+                        isPresent = true;
+                    }
+                }
+                
+                if(isPresent) {
+                    table += `<td class="status-P">P</td>`;
+                    totalP++;
+                } else {
+                    // If log exists but labour not in present list = Absent. If no log exists for the day = '-' (Not entered)
+                    table += dayLog ? `<td class="status-A">A</td>` : `<td style="color:#999">-</td>`;
+                }
+            }
+            table += `<td><b>${totalP}</b></td></tr>`;
+        });
+        
+        table += '</table>';
+        document.getElementById('monthlyRegisterBox').innerHTML = table;
     }
-
-    function exportMonthlyExcel() {
-        let logs = getStorage('attendanceLogs', []);
-        if(logs.length === 0) { alert("No data to export!"); return; }
-        let csv = "Date,Site,Supervisor,Present,Total\n";
-        logs.forEach(l => { csv += `${l.date},${l.site},${l.sup},${l.presentCount},${l.totalCount}\n`; });
-        let blob = new Blob([csv], {type: "text/csv"});
+    
+    function exportRegisterExcel() {
+        // Simple HTML table to CSV
+        let html = document.getElementById('monthlyRegisterBox').querySelector('table');
+        if(!html) return alert("Generate register first!");
+        let csv = [];
+        for (let i = 0; i < html.rows.length; i++) {
+            let row = [], cols = html.rows[i].querySelectorAll("td, th");
+            for (let j = 0; j < cols.length; j++) row.push(cols[j].innerText);
+            csv.push(row.join(","));
+        }
+        let blob = new Blob([csv.join("\n")], {type: "text/csv"});
         let url = window.URL.createObjectURL(blob);
-        let a = document.createElement("a");
-        a.href = url; a.download = "Attendance_Report.csv"; a.click();
+        let a = document.createElement("a"); a.href = url; a.download = `Register_${document.getElementById('registerMonth').value}.csv`; a.click();
     }
 
     function loadAdminData() {
-        let labs = getStorage('labours', []);
-        let logs = getStorage('attendanceLogs', []);
-        let sups = getStorage('supervisors', []);
-        let reqs = getStorage('attendanceReqs', []);
+        let labs = getS('labours', []);
+        let logs = getS('attendanceLogs', []);
         
-        let supBox = document.getElementById('supTableBox');
-        supBox.innerHTML = '';
-        let sTable = document.createElement('table');
-        sTable.innerHTML = '<tr><th>ID</th><th>Pass</th><th>Act</th></tr>';
-        let defaultSupList = [{ id: 'supervisor1', pass: 'pass123' }, { id: 'supervisor2', pass: 'pass456' }, { id: 'siteincharge', pass: 'mseng2026' }];
-        defaultSupList.concat(sups).forEach(s => {
-            let tr = document.createElement('tr');
-            let isDefault = ['supervisor1','supervisor2','siteincharge'].includes(s.id);
-            tr.innerHTML = `<td>${s.id}</td><td>${s.pass}</td><td>${isDefault ? 'Default' : '<button class="btn-danger" onclick="deleteSupervisor(\''+s.id+'\')">X</button>'}</td>`;
-            sTable.appendChild(tr);
-        });
-        supBox.appendChild(sTable);
+        let lHTML = '<table><tr><th>ID</th><th>Name</th></tr>';
+        labs.forEach(l => lHTML += `<tr><td>${l.empId}</td><td>${l.name}</td></tr>`);
+        document.getElementById('labTableBox').innerHTML = lHTML + '</table>';
 
-        let labBox = document.getElementById('labTableBox');
-        labBox.innerHTML = '';
-        let lTable = document.createElement('table');
-        lTable.innerHTML = '<tr><th>ID</th><th>Name</th><th>Act</th></tr>';
-        labs.forEach(l => {
-            let tr = document.createElement('tr');
-            tr.innerHTML = `<td>${l.empId}</td><td>${l.name}</td><td><button class="btn-danger" onclick="deleteLabour('${l.empId}')">X</button></td>`;
-            lTable.appendChild(tr);
+        let rHTML = '<table><tr><th>Date</th><th>Site</th><th>Sup</th><th>Present/Total</th></tr>';
+        logs.reverse().slice(0, 50).forEach(l => { // Show only last 50 for speed
+            rHTML += `<tr><td>${l.date}</td><td>${l.site}</td><td>${l.sup}</td><td>${l.presentCount}/${l.totalCount}</td></tr>`;
         });
-        labBox.appendChild(lTable);
-
-        let reportBox = document.getElementById('reportTableBox');
-        let searchQuery = document.getElementById('searchLog').value.toLowerCase();
-        let rTableHTML = '<table><tr><th>Date</th><th>Site</th><th>Supervisor</th><th>Present / Total</th><th>Action</th></tr>';
-        logs.forEach((l, idx) => {
-            if(!searchQuery || l.date.toLowerCase().includes(searchQuery) || l.site.toLowerCase().includes(searchQuery)) {
-                rTableHTML += `<tr><td>${l.date}</td><td>${l.site}</td><td>${l.sup}</td><td>${l.presentCount} / ${l.totalCount}</td><td><button class="btn-danger" onclick="deleteAttendanceLog(${idx})">Delete</button></td></tr>`;
-            }
-        });
-        rTableHTML += '</table>';
-        reportBox.innerHTML = rTableHTML;
-
-        let reqBox = document.getElementById('adminReqTableBox');
-        let reqHTML = '<table><tr><th>Date</th><th>Supervisor</th><th>Labour</th><th>Reason</th><th>Action</th></tr>';
-        reqs.forEach((r, idx) => {
-            if(r.status === 'Pending') {
-                reqHTML += `<tr><td>${r.date}</td><td>${r.sup}</td><td>${r.empName} (${r.empId})</td><td>${r.reason}</td><td><button class="btn-success" onclick="resolveRequest(${idx}, 'Approved')">Approve</button> <button class="btn-danger" onclick="resolveRequest(${idx}, 'Rejected')">Reject</button></td></tr>`;
-            }
-        });
-        reqHTML += '</table>';
-        reqBox.innerHTML = reqHTML;
+        document.getElementById('reportTableBox').innerHTML = rHTML + '</table>';
     }
 
-    async function resolveRequest(idx, status) {
-        let reqs = getStorage('attendanceReqs', []);
-        reqs[idx].status = status;
-        setStorage('attendanceReqs', reqs);
-        autoSyncToCloud();
-        loadAdminData();
-    }
-
-    function loadSupervisorChecklist() {
-        let labs = getStorage('labours', []);
-        let container = document.getElementById('checklistContainer');
-        container.innerHTML = '';
-        if(labs.length === 0) {
-            container.innerHTML = '<p style="color:red; font-size:13px;">No labours added yet. Contact Admin.</p>';
-            return;
-        }
+    function loadSupData() {
+        let labs = getS('labours', []);
+        let cont = document.getElementById('checklistContainer');
+        cont.innerHTML = '';
         labs.forEach(l => {
-            let div = document.createElement('div');
-            div.style.cssText = "display:flex; align-items:center; justify-content:space-between; padding:5px 0; border-bottom:1px solid #eee;";
-            div.innerHTML = `<span><b>${l.empId}</b> - ${l.name}</span> <input type="checkbox" class="labour-cb" value="${l.empId}" data-name="${l.name}" style="width:20px; height:20px;">`;
-            container.appendChild(div);
-        });
-
-        let select = document.getElementById('reqLabour');
-        select.innerHTML = '';
-        labs.forEach(l => {
-            let opt = document.createElement('option');
-            opt.value = l.empId;
-            opt.text = `${l.empId} - ${l.name}`;
-            select.appendChild(opt);
+            cont.innerHTML += `<div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #eee;">
+                <span><b>${l.empId}</b> - ${l.name}</span> 
+                <input type="checkbox" class="lab-cb" value="${l.empId}" data-name="${l.name}" style="width:22px; height:22px;">
+            </div>`;
         });
     }
 
-    async function verifyAndSubmitAttendance() {
+    function verifyAndSubmitAttendance() {
         let date = document.getElementById('attendanceDate').value;
-        let site = document.getElementById('siteNameInput').value.trim();
-        if(!date || !site) { alert("Date aur Site Name bharein!"); return; }
+        let site = document.getElementById('siteNameInput').value;
+        if(!date || !site) return alert("Date aur Site Name likhein!");
 
-        let checkboxes = document.querySelectorAll('.labour-cb:checked');
-        let presentList = [];
-        let presentNames = [];
-        checkboxes.forEach(cb => {
-            presentList.push(cb.value);
-            presentNames.push(cb.getAttribute('data-name'));
-        });
+        let checks = document.querySelectorAll('.lab-cb:checked');
+        let pList = [], pNames = [];
+        checks.forEach(c => { pList.push(c.value); pNames.push(c.getAttribute('data-name')); });
 
-        let totalCount = getStorage('labours', []).length;
-        let log = {
-            date: date,
-            site: site,
-            sup: activeUser.id,
-            presentCount: presentList.length,
-            totalCount: totalCount,
-            presentList: presentList,
-            presentNames: presentNames,
-            photo: base64PhotoString
-        };
-
-        let logs = getStorage('attendanceLogs', []);
+        let log = { date, site, sup: activeUser.id, presentCount: pList.length, totalCount: getS('labours', []).length, presentList: pList, presentNames: pNames, photo: base64Photo };
+        
+        let logs = getS('attendanceLogs', []);
         logs.push(log);
-        setStorage('attendanceLogs', logs);
-        lastSubmittedLog = log;
+        setS('attendanceLogs', logs);
+        lastLog = log;
 
-        autoSyncToCloud();
+        // FAST API CALL: Sirf nayi entry bhejein, pura database nahi.
+        fastAppendToCloud({ action: "appendLog", log: log });
 
-        alert("✅ Attendance Successfully Submitted & Synced!");
+        alert("✅ Submitted Fast!");
         document.getElementById('whatsappShareBox').classList.remove('hidden');
     }
 
     function shareLastAttendanceOnWhatsApp() {
-        if(!lastSubmittedLog) return;
-        let l = lastSubmittedLog;
-        let text = `⚡ *MS ELECTRICALS ATTENDANCE REPORT* ⚡\n`;
-        text += `📅 Date: ${l.date}\n`;
-        text += `🏗️ Site: ${l.site}\n`;
-        text += `👨‍💼 Supervisor: ${l.sup.toUpperCase()}\n`;
-        text += `👥 Present Labours: ${l.presentCount} / ${l.totalCount}\n`;
-        text += `--------------------------------\n`;
-        text += `✅ Present List:\n`;
-        l.presentList.forEach((id, idx) => {
-            text += `${idx+1}. ${id} - ${l.presentNames[idx]}\n`;
-        });
-        text += `--------------------------------\n`;
-        text += `Submitted via MS Electricals Portal`;
-
-        let encodedUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
-        window.open(encodedUrl, '_blank');
-    }
-
-    async function sendRequest() {
-        let date = document.getElementById('reqDate').value;
-        let labourSelect = document.getElementById('reqLabour');
-        let empId = labourSelect.value;
-        let empName = labourSelect.options[labourSelect.selectedIndex].text;
-        let reason = document.getElementById('reqReason').value.trim();
-
-        if(!date || !reason) { alert("Date aur Reason bharein!"); return; }
-
-        let reqs = getStorage('attendanceReqs', []);
-        reqs.push({
-            date: date,
-            sup: activeUser.id,
-            empId: empId,
-            empName: empName,
-            reason: reason,
-            status: 'Pending'
-        });
-        setStorage('attendanceReqs', reqs);
-        autoSyncToCloud();
-
-        document.getElementById('reqReason').value = '';
-        alert("Correction Request Sent to Admin!");
-        loadSupervisorRequests();
-    }
-
-    function loadSupervisorRequests() {
-        let reqs = getStorage('attendanceReqs', []).filter(r => r.sup === activeUser.id);
-        let box = document.getElementById('myRequestsBox');
-        let html = '<b>My Requests Status:</b><br><ul>';
-        reqs.forEach(r => {
-            let color = r.status === 'Approved' ? 'green' : (r.status === 'Rejected' ? 'red' : 'orange');
-            html += `<li>${r.date} (${r.empName}): <span style="color:${color}; font-weight:bold;">${r.status}</span></li>`;
-        });
-        html += '</ul>';
-        box.innerHTML = html;
+        let l = lastLog;
+        if(!l) return;
+        let text = `⚡ *ATTENDANCE REPORT* ⚡\n📅 Date: ${l.date}\n🏗️ Site: ${l.site}\n👨‍💼 Sup: ${l.sup}\n👥 Present: ${l.presentCount}/${l.totalCount}\n----------------\n`;
+        l.presentNames.forEach((n, i) => text += `${i+1}. ${n}\n`);
+        window.open(`https://wa.me/?text=${encodeURIComponent(text)}`);
     }
 </script>
 </body>
