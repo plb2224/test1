@@ -204,7 +204,6 @@
             return;
         }
 
-        // 1. Admin Login
         if (id === 'admin' && pass === 'admin123') {
             activeUser = { role: 'admin', id: 'admin' };
             document.getElementById('loginSection').classList.add('hidden');
@@ -214,7 +213,6 @@
             return;
         }
 
-        // 2. Supervisors List Check
         let defaultSupervisors = [
             { id: 'supervisor1', pass: 'pass123' },
             { id: 'supervisor2', pass: 'pass456' },
@@ -240,7 +238,7 @@
     }
 
     function doLogout() { activeUser = null; location.reload(); }
-    
+
     function resetSystemData() {
         if(confirm("Dhyan Dein! Saara local data reset ho jayega. Continue?")) {
             localStorage.clear();
@@ -274,11 +272,10 @@
                 await fetch(cloudUrl, {
                     method: 'POST',
                     mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ type: 'supervisor', supId: id, supPass: pass })
                 });
-            } catch(e) {
-                console.log("Cloud sync error");
-            }
+            } catch(e) { console.log("Cloud sync error"); }
         }
 
         document.getElementById('newSupId').value = '';
@@ -575,6 +572,7 @@
                 await fetch(cloudUrl, {
                     method: 'POST',
                     mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
                 alert("✅ Attendance Saved & Sent to Google Sheet!");
