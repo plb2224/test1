@@ -7,50 +7,45 @@
     <title>MS ELECTRICALS - Attendance System</title>
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background: #eef2f5; margin: 0; padding: 15px; color: #333; }
-        .box { max-width: 1000px; margin: auto; background: #fff; padding: 25px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        h2, h3 { color: #1a365d; margin-top: 10px; }
-        .field { margin-bottom: 12px; }
-        label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 13px; }
-        input, select, button, textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; }
-        button { background: #0066cc; color: white; border: none; font-weight: bold; cursor: pointer; margin-top: 5px; border-radius: 6px; transition: 0.3s; }
-        button:hover { opacity: 0.9; }
-        button:disabled { background: #888; cursor: not-allowed; }
+        body { background: #f4f6f9; margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 900px; margin: auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h2, h3 { color: #2c3e50; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 14px; }
+        input, select, button { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
+        button { background: #2980b9; color: white; border: none; font-weight: bold; cursor: pointer; margin-top: 5px; }
+        button:hover { background: #2471a3; }
+        button:disabled { background: #95a5a6; cursor: not-allowed; }
         .hidden { display: none !important; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; background: #fff; }
-        th, td { border: 1px solid #e2e8f0; padding: 10px; text-align: center; }
-        th { background: #1a365d; color: white; }
-        .btn-danger { background: #e53e3e; width: auto; padding: 6px 12px; font-size: 12px; }
-        .btn-warning { background: #dd6b20; width: auto; padding: 6px 12px; font-size: 12px; color: white; }
-        .btn-success { background: #38a169; width: auto; padding: 6px 12px; font-size: 12px; }
-        .card { background: #f8fafc; padding: 15px; border: 1px solid #cbd5e1; border-radius: 8px; margin-bottom: 20px; }
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 15px; }
-        .stat-card { padding: 15px; border-radius: 8px; color: white; text-align: center; }
-        .bg-blue { background: #3182ce; }
-        .bg-green { background: #38a169; }
-        .login-card { max-width: 400px; margin: 30px auto; padding: 20px; border: 1px solid #cbd5e1; border-radius: 8px; background: #f8fafc; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+        th { background: #2c3e50; color: white; }
+        .btn-danger { background: #c0392b; width: auto; padding: 5px 10px; font-size: 12px; }
+        .btn-warning { background: #d35400; width: auto; padding: 5px 10px; font-size: 12px; color: white; }
+        .btn-success { background: #27ae60; width: auto; padding: 5px 10px; font-size: 12px; }
+        .card { background: #fafafa; padding: 15px; border: 1px solid #e1e1e1; border-radius: 6px; margin-bottom: 15px; }
     </style>
 </head>
 <body>
 
-<div class="box">
+<div class="container">
     <!-- LOGIN SECTION -->
     <div id="loginSection">
         <h2 style="text-align:center;">MS ELECTRICALS</h2>
-        <p style="text-align:center; color:#666; margin-top:-10px;">Site Attendance Management</p>
+        <p style="text-align:center; color:#666;">Site Attendance Management System</p>
         
-        <div class="login-card">
-            <div class="field">
+        <div class="card" style="max-width: 400px; margin: 20px auto;">
+            <div class="form-group">
                 <label>User ID:</label>
                 <input type="text" id="uid" placeholder="Admin ya Supervisor ID">
             </div>
-            <div class="field">
+            <div class="form-group">
                 <label>Password:</label>
                 <input type="password" id="upass" placeholder="Password daalein">
             </div>
             <button type="button" onclick="handleLogin()">Login Karein</button>
             <div style="margin-top:15px; text-align:center;">
-                <button type="button" class="btn-success" style="width:100%; padding:8px; margin-bottom:8px;" onclick="syncFromCloud()">🔄 Cloud se Data Sync Karein</button>
+                <button type="button" class="btn-success" style="width:100%; padding:8px; margin-bottom:5px;" onclick="syncFromCloud()">🔄 Cloud se Data Sync Karein</button>
                 <button type="button" class="btn-warning" style="width:100%; padding:8px;" onclick="resetSystemData()">🔄 System Data Reset</button>
             </div>
         </div>
@@ -59,64 +54,53 @@
     <!-- ADMIN PANEL -->
     <div id="adminPanel" class="hidden">
         <div style="display:flex; justify-content:space-between; align-items:center;">
-            <h2>👑 Admin Master Panel</h2>
+            <h2>Admin Master Panel</h2>
             <div>
-                <button type="button" class="btn-success" style="padding:8px 12px;" onclick="syncFromCloud()">🔄 Sync Cloud</button>
-                <button type="button" class="btn-danger" style="padding:8px 12px;" onclick="doLogout()">Logout</button>
-            </div>
-        </div>
-        
-        <div class="stats-grid">
-            <div class="stat-card bg-blue">
-                <h4 style="margin:0; font-size:13px; text-transform:uppercase;">Total Labours</h4>
-                <h2 id="statTotalLabours" style="margin:8px 0 0 0; font-size:26px;">0</h2>
-            </div>
-            <div class="stat-card bg-green">
-                <h4 style="margin:0; font-size:13px; text-transform:uppercase;">Aaj Ke Present</h4>
-                <h2 id="statTodayPresent" style="margin:8px 0 0 0; font-size:26px;">0</h2>
+                <button type="button" class="btn-success" onclick="syncFromCloud()">🔄 Sync Cloud</button>
+                <button type="button" class="btn-danger" onclick="doLogout()">Logout</button>
             </div>
         </div>
 
         <div class="card">
-            <h3 style="margin:0 0 8px 0;">☁️ Google Cloud & Sheet Auto-Save Link</h3>
-            <div style="display:flex; gap:6px;">
-                <input type="text" id="cloudUrlInput" placeholder="Paste Apps Script Web App URL ending with /exec...">
-                <button type="button" class="btn-success" style="width:150px;" onclick="saveCloudUrl()">Save Link</button>
+            <h3>☁️ Google Apps Script Cloud URL Setup</h3>
+            <div style="display:flex; gap:5px;">
+                <input type="text" id="cloudUrlInput" placeholder="Paste Web App URL ending with /exec...">
+                <button type="button" class="btn-success" style="width:120px;" onclick="saveCloudUrl()">Save URL</button>
             </div>
         </div>
 
-        <div class="card" style="border-left: 4px solid #dd6b20;">
-            <h3>🔔 Attendance Correction Requests</h3>
+        <div class="card">
+            <h3>🔔 Pending Attendance Requests</h3>
             <div id="adminReqTableBox" style="overflow-x:auto;"></div>
         </div>
 
-        <div style="display:flex; gap:20px; flex-wrap:wrap;">
-            <div class="card" style="flex:1; min-width:300px;">
-                <h3>👑 Manage Supervisors</h3>
-                <div style="display:flex; gap:5px; margin-bottom:10px;">
-                    <input type="text" id="newSupId" placeholder="Supervisor ID">
-                    <input type="password" id="newSupPass" placeholder="Password">
+        <div style="display:flex; gap:15px; flex-wrap:wrap;">
+            <div class="card" style="flex:1; min-width:280px;">
+                <h3>Manage Supervisors</h3>
+                <div style="display:flex; gap:5px; margin-bottom:8px;">
+                    <input type="text" id="newSupId" placeholder="Sup ID">
+                    <input type="password" id="newSupPass" placeholder="Pass">
                     <button type="button" class="btn-success" onclick="addSupervisor()">Add</button>
                 </div>
-                <div id="supTableBox" style="max-height:200px; overflow-y:auto;"></div>
+                <div id="supTableBox" style="max-height:180px; overflow-y:auto;"></div>
             </div>
-            <div class="card" style="flex:1; min-width:300px;">
-                <h3>👷 Add Labour</h3>
-                <div style="display:flex; gap:5px; margin-bottom:10px;">
+            <div class="card" style="flex:1; min-width:280px;">
+                <h3>Manage Labours</h3>
+                <div style="display:flex; gap:5px; margin-bottom:8px;">
                     <input type="text" id="labName" placeholder="Name">
                     <input type="text" id="labEmpId" placeholder="ID (L01)">
                     <button type="button" class="btn-success" onclick="addLabour()">Add</button>
                 </div>
-                <div id="labTableBox" style="max-height:200px; overflow-y:auto;"></div>
+                <div id="labTableBox" style="max-height:180px; overflow-y:auto;"></div>
             </div>
         </div>
 
         <div class="card">
             <div style="display:flex; justify-content:space-between; align-items:center;">
-                <h3>📋 Local Attendance Reports</h3>
-                <button type="button" class="btn-success" onclick="exportMonthlyExcel()">📊 Download CSV</button>
+                <h3>Attendance Reports</h3>
+                <button type="button" class="btn-success" onclick="exportMonthlyExcel()">📊 Export CSV</button>
             </div>
-            <input type="text" id="searchLog" placeholder="🔍 Search Date/Site..." onkeyup="loadAdminData()" style="margin-bottom:10px;">
+            <input type="text" id="searchLog" placeholder="🔍 Search Date or Site..." onkeyup="loadAdminData()" style="margin-bottom:10px;">
             <div id="reportTableBox" style="overflow-x:auto;"></div>
         </div>
     </div>
@@ -124,50 +108,50 @@
     <!-- SUPERVISOR PANEL -->
     <div id="supervisorPanel" class="hidden">
         <div style="display:flex; justify-content:space-between; align-items:center;">
-            <h2 id="supWelcome">Supervisor</h2>
+            <h2 id="supWelcome">Supervisor Panel</h2>
             <div>
-                <button type="button" class="btn-success" style="padding:8px 12px;" onclick="syncFromCloud()">🔄 Refresh</button>
-                <button type="button" class="btn-danger" style="padding:8px 12px;" onclick="doLogout()">Logout</button>
+                <button type="button" class="btn-success" onclick="syncFromCloud()">🔄 Refresh</button>
+                <button type="button" class="btn-danger" onclick="doLogout()">Logout</button>
             </div>
         </div>
 
         <div class="card">
-            <h3>📝 Daily Attendance Entry</h3>
-            <div class="field">
+            <h3>Daily Attendance Entry</h3>
+            <div class="form-group">
                 <label>Date:</label>
                 <input type="date" id="attendanceDate">
             </div>
-            <div class="field">
+            <div class="form-group">
                 <label>Site Name:</label>
                 <input type="text" id="siteNameInput" placeholder="e.g., Site Phase 1">
             </div>
-            <div class="field">
-                <label>📸 Group Selfie / Photo:</label>
+            <div class="form-group">
+                <label>Group Selfie / Photo:</label>
                 <input type="file" id="groupPhoto" accept="image/*" capture="environment">
             </div>
-            <div class="field">
+            <div class="form-group">
                 <label>Checklist (Tick for Present):</label>
-                <div id="checklistContainer" style="max-height:220px; overflow-y:auto; border:1px solid #ddd; padding:8px; background:#fff; border-radius:6px;"></div>
+                <div id="checklistContainer" style="max-height:200px; overflow-y:auto; border:1px solid #ccc; padding:8px; background:#fff;"></div>
             </div>
-            <button type="button" id="submitBtn" onclick="submitAttendance()">🚀 Submit Attendance</button>
+            <button type="button" onclick="submitAttendance()">Submit Attendance</button>
         </div>
 
         <div class="card">
-            <h3>⚠️ Attendance Miss Ho Gayi? (Request)</h3>
-            <div class="field">
+            <h3>Attendance Miss Request (Correction)</h3>
+            <div class="form-group">
                 <label>Date:</label>
                 <input type="date" id="reqDate">
             </div>
-            <div class="field">
+            <div class="form-group">
                 <label>Labour:</label>
                 <select id="reqLabour"></select>
             </div>
-            <div class="field">
+            <div class="form-group">
                 <label>Reason:</label>
-                <input type="text" id="reqReason" placeholder="Reason...">
+                <input type="text" id="reqReason" placeholder="Reason for missing entry...">
             </div>
-            <button type="button" class="btn-warning" onclick="sendRequest()">📤 Send Request</button>
-            <div id="myRequestsBox" style="margin-top:15px; font-size:12px;"></div>
+            <button type="button" class="btn-warning" onclick="sendRequest()">Send Request</button>
+            <div id="myRequestsBox" style="margin-top:10px; font-size:13px;"></div>
         </div>
     </div>
 </div>
@@ -182,39 +166,61 @@
 
     let activeUser = null;
 
+    // Auto-load cloud data quietly on start if URL is saved
+    window.addEventListener('DOMContentLoaded', async () => {
+        let cloudUrl = getStorage('cloudUrl', '');
+        if (cloudUrl) {
+            await syncFromCloudSilent();
+        }
+    });
+
     async function syncFromCloud() {
         let cloudUrl = getStorage('cloudUrl', '');
         if(!cloudUrl) {
-            alert("⚠️ Pehle Admin Panel mein Apps Script ka Web App URL (/exec wala) daalkar Save Karein!");
+            alert("⚠️ Pehle Admin Panel mein Apps Script Web App URL daalkar Save URL karein!");
             return;
         }
         try {
             let res = await fetch(cloudUrl + "?action=getAllData");
-            if (!res.ok) throw new Error('Network response status: ' + res.status);
+            if (!res.ok) throw new Error('Network response failed');
+            let data = await res.json();
             
-            let textData = await res.text();
-            let data = JSON.parse(textData);
-            
-            if(data.status === 'error') throw new Error("Script Error: " + data.message);
+            if(data.status === 'error') throw new Error(data.message);
 
             if(data.supervisors) setStorage('supervisors', data.supervisors);
             if(data.labours) setStorage('labours', data.labours);
+            if(data.attendanceLogs) setStorage('attendanceLogs', data.attendanceLogs);
+            if(data.attendanceReqs) setStorage('attendanceReqs', data.attendanceReqs);
             
-            alert("✅ Cloud se saara data successfully sync ho gaya!");
+            alert("✅ Cloud se data successfully sync ho gaya!");
             if(activeUser && activeUser.role === 'admin') loadAdminData();
-            if(activeUser && activeUser.role === 'supervisor') loadSupervisorChecklist();
-            
+            if(activeUser && activeUser.role === 'supervisor') {
+                loadSupervisorChecklist();
+                loadSupervisorRequests();
+            }
         } catch(e) {
-            console.error("Sync Error:", e);
-            alert("❌ Sync Failed! Error: " + e.message);
+            alert("❌ Sync Failed: " + e.message);
         }
+    }
+
+    async function syncFromCloudSilent() {
+        let cloudUrl = getStorage('cloudUrl', '');
+        if(!cloudUrl) return;
+        try {
+            let res = await fetch(cloudUrl + "?action=getAllData");
+            let data = await res.json();
+            if(data.supervisors) setStorage('supervisors', data.supervisors);
+            if(data.labours) setStorage('labours', data.labours);
+            if(data.attendanceLogs) setStorage('attendanceLogs', data.attendanceLogs);
+            if(data.attendanceReqs) setStorage('attendanceReqs', data.attendanceReqs);
+        } catch(e) {}
     }
 
     async function handleLogin() {
         let id = document.getElementById('uid').value.trim().toLowerCase();
         let pass = document.getElementById('upass').value.trim();
 
-        if(!id || !pass) { alert('❌ ID aur Password daalein!'); return; }
+        if(!id || !pass) { alert('ID aur Password daalein!'); return; }
 
         await syncFromCloudSilent();
 
@@ -246,19 +252,8 @@
             loadSupervisorChecklist();
             loadSupervisorRequests();
         } else {
-            alert('❌ Invalid ID or Password!');
+            alert('Invalid ID or Password!');
         }
-    }
-
-    async function syncFromCloudSilent() {
-        let cloudUrl = getStorage('cloudUrl', '');
-        if(!cloudUrl) return;
-        try {
-            let res = await fetch(cloudUrl + "?action=getAllData");
-            let data = await res.json();
-            if(data.supervisors) setStorage('supervisors', data.supervisors);
-            if(data.labours) setStorage('labours', data.labours);
-        } catch(e) {}
     }
 
     function doLogout() { activeUser = null; location.reload(); }
@@ -266,20 +261,20 @@
     
     function saveCloudUrl() {
         let url = document.getElementById('cloudUrlInput').value.trim();
-        if(!url.endsWith('/exec')) {
-            alert("⚠️ Warning: Google Web App URL aamtaur par '/exec' par khatam hota hai.");
-        }
         setStorage('cloudUrl', url);
-        alert("Cloud URL Saved!");
+        alert("Cloud URL Saved Successfully!");
         syncFromCloud();
     }
 
+    // Auto-sync function to push updates to Google Sheets instantly
     async function autoSyncToCloud() {
         let cloudUrl = getStorage('cloudUrl', '');
         if(!cloudUrl) return;
         let payload = {
             supervisors: getStorage('supervisors', []),
-            labours: getStorage('labours', [])
+            labours: getStorage('labours', []),
+            attendanceLogs: getStorage('attendanceLogs', []),
+            attendanceReqs: getStorage('attendanceReqs', [])
         };
         try {
             await fetch(cloudUrl, {
@@ -288,16 +283,16 @@
                 headers: { "Content-Type": "text/plain;charset=utf-8" },
                 body: JSON.stringify(payload)
             });
-        } catch(e) { console.error("Auto-sync error:", e); }
+        } catch(e) {}
     }
 
     async function addSupervisor() {
         let id = document.getElementById('newSupId').value.trim().toLowerCase();
         let pass = document.getElementById('newSupPass').value.trim();
-        if(!id || !pass) { alert("ID aur Password bharein!"); return; }
+        if(!id || !pass) { alert("ID aur Pass bharein!"); return; }
         
         let sups = getStorage('supervisors', []);
-        if(sups.some(s => s.id === id)) { alert("Yeh ID pehle se hai!"); return; }
+        if(sups.some(s => s.id === id)) { alert("ID already exists!"); return; }
         
         sups.push({ id: id, pass: pass });
         setStorage('supervisors', sups);
@@ -306,13 +301,13 @@
         document.getElementById('newSupId').value = '';
         document.getElementById('newSupPass').value = '';
         loadAdminData();
-        alert("✅ Supervisor Added & Synced!");
+        alert("Supervisor Added & Synced!");
     }
 
-    function deleteSupervisor(id) {
+    async function deleteSupervisor(id) {
         let sups = getStorage('supervisors', []).filter(s => s.id !== id);
         setStorage('supervisors', sups);
-        autoSyncToCloud();
+        await autoSyncToCloud();
         loadAdminData();
     }
 
@@ -322,7 +317,7 @@
         if(!name || !empId) { alert("Name aur ID bharein!"); return; }
         
         let labs = getStorage('labours', []);
-        if(labs.some(l => l.empId === empId)) { alert("Yeh Labour ID pehle se hai!"); return; }
+        if(labs.some(l => l.empId === empId)) { alert("Labour ID already exists!"); return; }
         
         labs.push({empId: empId, name: name});
         setStorage('labours', labs);
@@ -331,26 +326,27 @@
         document.getElementById('labName').value = '';
         document.getElementById('labEmpId').value = '';
         loadAdminData();
-        alert("✅ Labour Added & Synced!");
+        alert("Labour Added & Synced!");
     }
 
-    function deleteLabour(empId) {
+    async function deleteLabour(empId) {
         let labs = getStorage('labours', []).filter(l => l.empId !== empId);
         setStorage('labours', labs);
-        autoSyncToCloud();
+        await autoSyncToCloud();
         loadAdminData();
     }
 
-    function deleteAttendanceLog(idx) {
+    async function deleteAttendanceLog(idx) {
         let logs = getStorage('attendanceLogs', []);
         logs.splice(idx, 1);
         setStorage('attendanceLogs', logs);
+        await autoSyncToCloud();
         loadAdminData();
     }
 
     function exportMonthlyExcel() {
         let logs = getStorage('attendanceLogs', []);
-        if(logs.length === 0) { alert("No data!"); return; }
+        if(logs.length === 0) { alert("No data to export!"); return; }
         let csv = "Date,Site,Supervisor,Present,Total\n";
         logs.forEach(l => { csv += `${l.date},${l.site},${l.sup},${l.presentCount},${l.totalCount}\n`; });
         let blob = new Blob([csv], {type: "text/csv"});
@@ -365,10 +361,6 @@
         let sups = getStorage('supervisors', []);
         let reqs = getStorage('attendanceReqs', []);
         
-        let todayStr = new Date().toISOString().split('T')[0];
-        document.getElementById('statTotalLabours').innerText = labs.length;
-        document.getElementById('statTodayPresent').innerText = logs.filter(l => l.date === todayStr).reduce((sum, l) => sum + (l.presentCount || 0), 0);
-
         let supBox = document.getElementById('supTableBox');
         supBox.innerHTML = '';
         let sTable = document.createElement('table');
@@ -394,15 +386,16 @@
         labBox.appendChild(lTable);
 
         let reqBox = document.getElementById('adminReqTableBox');
-        reqBox.innerHTML = reqs.length ? '' : '<p style="margin:5px; font-size:13px; color:#666;">No pending requests.</p>';
+        reqBox.innerHTML = reqs.length ? '' : '<p style="margin:5px; font-size:13px; color:#666;">No requests found.</p>';
         if(reqs.length > 0) {
             let rTable = document.createElement('table');
             rTable.innerHTML = '<tr><th>Date</th><th>Sup</th><th>Labour</th><th>Reason</th><th>Action</th></tr>';
             reqs.slice().reverse().forEach((r, i) => {
+                let actualIndex = reqs.length - 1 - i;
                 let tr = document.createElement('tr');
                 let actCell = r.status === 'Pending' ? 
-                    `<button class="btn-success" onclick="approveReq(${i})">✔</button> <button class="btn-danger" onclick="rejectReq(${i})">✖</button>` : 
-                    `<span style="font-weight:bold;">${r.status}</span>`;
+                    `<button class="btn-success" onclick="approveReq(${actualIndex})">✔</button> <button class="btn-danger" onclick="rejectReq(${actualIndex})">✖</button>` : 
+                    `<b>${r.status}</b>`;
                 tr.innerHTML = `<td>${r.date}</td><td>${r.sup}</td><td>${r.empName}</td><td>${r.reason}</td><td>${actCell}</td>`;
                 rTable.appendChild(tr);
             });
@@ -413,11 +406,12 @@
         let repBox = document.getElementById('reportTableBox');
         repBox.innerHTML = '';
         let repTable = document.createElement('table');
-        repTable.innerHTML = '<tr><th>Date</th><th>Site</th><th>Supervisor</th><th>Present / Total</th><th>Action</th></tr>';
+        repTable.innerHTML = '<tr><th>Date</th><th>Site</th><th>Supervisor</th><th>Present/Total</th><th>Action</th></tr>';
         
         logs.filter(l => !searchQ || l.date.toLowerCase().includes(searchQ) || l.site.toLowerCase().includes(searchQ)).slice().reverse().forEach((l, idx) => {
+            let actualIdx = logs.length - 1 - idx;
             let tr = document.createElement('tr');
-            tr.innerHTML = `<td>${l.date}</td><td>${l.site}</td><td>${l.sup}</td><td>${l.presentCount} / ${l.totalCount}</td><td><button class="btn-danger" onclick="deleteAttendanceLog(${idx})">Delete</button></td>`;
+            tr.innerHTML = `<td>${l.date}</td><td>${l.site}</td><td>${l.sup}</td><td>${l.presentCount} / ${l.totalCount}</td><td><button class="btn-danger" onclick="deleteAttendanceLog(${actualIdx})">Delete</button></td>`;
             repTable.appendChild(tr);
         });
         repBox.appendChild(repTable);
@@ -426,12 +420,12 @@
     function loadSupervisorChecklist() {
         let labs = getStorage('labours', []);
         let container = document.getElementById('checklistContainer');
-        container.innerHTML = labs.length === 0 ? '<p style="color:#666; font-size:13px;">Koi labour nahi hai. Pehle Admin se labour add karwayein.</p>' : '';
+        container.innerHTML = labs.length === 0 ? '<p style="color:#666; font-size:13px;">Koi labour nahi hai. Admin se add karwayein.</p>' : '';
         
         labs.forEach(l => {
             let div = document.createElement('div');
-            div.style.cssText = "display:flex; align-items:center; margin-bottom:6px; background:#f1f5f9; padding:6px; border-radius:4px;";
-            div.innerHTML = `<input type="checkbox" class="lab-chk" value="${l.empId}" style="width:20px; height:20px; margin-right:10px;"> <span style="font-size:14px; font-weight:500;">${l.name} (${l.empId})</span>`;
+            div.style.cssText = "margin-bottom:5px;";
+            div.innerHTML = `<label style="font-weight:normal; display:inline-block;"><input type="checkbox" class="lab-chk" value="${l.empId}" style="width:auto; margin-right:8px;"> ${l.name} (${l.empId})</label>`;
             container.appendChild(div);
         });
 
@@ -445,7 +439,7 @@
         });
     }
 
-    function submitAttendance() {
+    async function submitAttendance() {
         let date = document.getElementById('attendanceDate').value;
         let site = document.getElementById('siteNameInput').value.trim();
         if(!date || !site) { alert("Date aur Site Name zaroori hai!"); return; }
@@ -464,12 +458,14 @@
             presentList: presentIds
         });
         setStorage('attendanceLogs', logs);
-        alert("✅ Attendance Successfully Submit Ho Gayi!");
+        await autoSyncToCloud();
+        
+        alert("✅ Attendance Submitted & Synced!");
         document.getElementById('siteNameInput').value = '';
         document.querySelectorAll('.lab-chk').forEach(cb => cb.checked = false);
     }
 
-    function sendRequest() {
+    async function sendRequest() {
         let date = document.getElementById('reqDate').value;
         let empId = document.getElementById('reqLabour').value;
         let reason = document.getElementById('reqReason').value.trim();
@@ -488,8 +484,10 @@
             status: 'Pending'
         });
         setStorage('attendanceReqs', reqs);
+        await autoSyncToCloud();
+        
         document.getElementById('reqReason').value = '';
-        alert("📤 Request Admin ke paas bhej di gayi hai!");
+        alert("📤 Request bhej di gayi hai!");
         loadSupervisorRequests();
     }
 
@@ -499,17 +497,19 @@
         box.innerHTML = reqs.length === 0 ? 'Pichli koi request nahi hai.' : `<b>Aapki Requests:</b> ${reqs.length} total`;
     }
 
-    function approveReq(idx) {
+    async function approveReq(idx) {
         let reqs = getStorage('attendanceReqs', []);
         reqs[idx].status = 'Approved';
         setStorage('attendanceReqs', reqs);
+        await autoSyncToCloud();
         loadAdminData();
     }
 
-    function rejectReq(idx) {
+    async function rejectReq(idx) {
         let reqs = getStorage('attendanceReqs', []);
         reqs[idx].status = 'Rejected';
         setStorage('attendanceReqs', reqs);
+        await autoSyncToCloud();
         loadAdminData();
     }
 </script>
