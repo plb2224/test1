@@ -3,12 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- CACHE CONTROL: Mobile par purana design na dikhe -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     
-    <!-- PWA Install Support -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#1a365d">
     
@@ -55,20 +53,20 @@
         <h2 style="text-align:center;">MS ELECTRICALS</h2>
         <p style="text-align:center; color:#666; margin-top:-10px;">Site Attendance Management</p>
         
-        <form class="login-card" onsubmit="handleLogin(event)">
+        <div class="login-card">
             <div class="field">
                 <label>User ID:</label>
-                <input type="text" id="uid" placeholder="Admin ya Supervisor ID" required>
+                <input type="text" id="uid" placeholder="Admin ya Supervisor ID">
             </div>
             <div class="field">
                 <label>Password:</label>
-                <input type="password" id="upass" placeholder="Password daalein" required>
+                <input type="password" id="upass" placeholder="Password daalein">
             </div>
-            <button type="submit">Login Karein</button>
+            <button type="button" onclick="handleLogin()">Login Karein</button>
             <div style="margin-top:15px; text-align:center;">
                 <button type="button" class="btn-warning" style="width:100%; padding:8px;" onclick="resetSystemData()">🔄 System Data Reset</button>
             </div>
-        </form>
+        </div>
     </div>
 
     <!-- ADMIN PANEL -->
@@ -104,10 +102,10 @@
 
         <div style="display:flex; gap:20px; flex-wrap:wrap;">
             <div class="card" style="flex:1; min-width:300px;">
-                <h3>Add / Remove Supervisor</h3>
+                <h3>Add / Remove Supervisor (Up to 10+)</h3>
                 <div style="display:flex; gap:5px;" class="flex-row">
-                    <input type="text" id="newSupId" placeholder="Sup ID">
-                    <input type="password" id="newSupPass" placeholder="Pass">
+                    <input type="text" id="newSupId" placeholder="Sup ID (e.g. sup1)">
+                    <input type="password" id="newSupPass" placeholder="Password">
                     <button type="button" class="btn-success" onclick="addSupervisor()">Add</button>
                 </div>
                 <div id="supTableBox"></div>
@@ -197,12 +195,16 @@
     let activeUser = null;
     let compressedImageBase64 = "";
 
-    function handleLogin(event) {
-        event.preventDefault(); 
+    function handleLogin() {
         let id = document.getElementById('uid').value.trim().toLowerCase();
         let pass = document.getElementById('upass').value.trim();
 
-        // 1. Admin Login (Fixed)
+        if(!id || !pass) {
+            alert('❌ Kripya User ID aur Password dono daalein!');
+            return;
+        }
+
+        // 1. Admin Login
         if (id === 'admin' && pass === 'admin123') {
             activeUser = { role: 'admin', id: 'admin' };
             document.getElementById('loginSection').classList.add('hidden');
@@ -212,7 +214,7 @@
             return;
         }
 
-        // 2. Hardcoded Supervisors (Taki kisi bhi phone par bina error ke chalein)
+        // 2. Default & Dynamic Supervisors List
         let defaultSupervisors = [
             { id: 'supervisor1', pass: 'pass123' },
             { id: 'supervisor2', pass: 'pass456' },
@@ -220,7 +222,7 @@
         ];
 
         let storedSupervisors = getStorage('supervisors', []);
-        let allSupervisors = [...defaultSupervisors, ...storedSupervisors];
+        let allSupervisors = defaultSupervisors.concat(storedSupervisors);
 
         let found = allSupervisors.find(s => s.id.toLowerCase() === id && s.pass === pass);
 
@@ -233,7 +235,7 @@
             loadSupervisorChecklist();
             loadSupervisorRequests();
         } else {
-            alert('❌ Invalid ID or Password! Kripya sahi details check karein.');
+            alert('❌ Invalid ID or Password!\nAapne ID bhari hai: "' + id + '"\nSahi ID ya Password daalein.');
         }
     }
 
@@ -253,20 +255,26 @@
     function addSupervisor() {
         let id = document.getElementById('newSupId').value.trim();
         let pass = document.getElementById('newSupPass').value.trim();
-        if(!id || !pass) return;
+        if(!id || !pass) { alert("ID aur Password dono bharein!"); return; }
+        
         let sups = getStorage('supervisors', []);
-        if(sups.find(s => s.id.toLowerCase() === id.toLowerCase())) { alert("ID exists!"); return; }
-        sups.push({id: id, pass: pass});
+        if(sups.find(s => s.id.toLowerCase() === id.toLowerCase())) { alert("Yeh ID pehle se mojood hai!"); return; }
+        
+        sups.push({ id: id, pass: pass });
         setStorage('supervisors', sups);
         document.getElementById('newSupId').value = '';
         document.getElementById('newSupPass').value = '';
         loadAdminData();
+        alert("✅ Supervisor Successfully Added!");
     }
 
     function deleteSupervisor(id) {
-        let sups = getStorage('supervisors', []).filter(s => s.id !== id);
-        setStorage('supervisors', sups);
-        loadAdminData();
+        if(confirm(`Kya aap supervisor "${id}" ko hatana chahte hain?`)) {
+            let sups = getStorage('supervisors', []).filter(s => s.id !== id);
+            setStorage('supervisors', sups);
+            loadAdminData();
+            alert("❌ Supervisor Removed!");
+        }
     }
 
     function addLabour() {
@@ -318,20 +326,36 @@
         document.getElementById('statTotalLabours').innerText = labs.length;
         document.getElementById('statTodayPresent').innerText = todayLogs.reduce((sum, l) => sum + (l.presentCount || 0), 0);
 
+        // Supervisor Table
         let supBox = document.getElementById('supTableBox');
         supBox.innerHTML = '';
         let sTable = document.createElement('table');
-        sTable.innerHTML = '<tr><th>ID</th><th>Pass</th><th>Act</th></tr>';
-        sups.forEach(s => {
+        sTable.innerHTML = '<tr><th>ID</th><th>Password</th><th>Act</th></tr>';
+        
+        // Show default + custom supervisors in admin list
+        let defaultSupList = [
+            { id: 'supervisor1', pass: 'pass123' },
+            { id: 'supervisor2', pass: 'pass456' },
+            { id: 'siteincharge', pass: 'mseng2026' }
+        ];
+        let allSups = defaultSupList.concat(sups);
+
+        allSups.forEach(s => {
             let tr = document.createElement('tr');
             let td1 = document.createElement('td'); td1.textContent = s.id;
             let td2 = document.createElement('td'); td2.textContent = s.pass;
             let td3 = document.createElement('td');
-            let btn = document.createElement('button');
-            btn.className = 'btn-danger';
-            btn.textContent = 'X';
-            btn.onclick = () => deleteSupervisor(s.id);
-            td3.appendChild(btn);
+            if(!['supervisor1', 'supervisor2', 'siteincharge'].includes(s.id)) {
+                let btn = document.createElement('button');
+                btn.className = 'btn-danger';
+                btn.textContent = 'X';
+                btn.onclick = () => deleteSupervisor(s.id);
+                td3.appendChild(btn);
+            } else {
+                td3.textContent = 'Default';
+                td3.style.fontSize = '11px';
+                td3.style.color = '#666';
+            }
             tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(td3);
             sTable.appendChild(tr);
         });
@@ -523,6 +547,7 @@
         };
 
         let logs = getStorage('attendanceLogs', []);
+        logs.logCount = (logs.logCount || 0) + 1;
         logs.push(payload);
         setStorage('attendanceLogs', logs);
 
@@ -556,7 +581,7 @@
         let reqs = getStorage('attendanceReqs', []);
         reqs.push({ reqId: Date.now(), date: reqDate, sup: activeUser.id, empId: empId, empName: empName, reason: reqReason, status: 'Pending' });
         setStorage('attendanceReqs', reqs);
-        alert("Request Sent to Admin!");
+        alert("Request Sent to Admin! Admin approve karenge tabhi add hoga.");
         document.getElementById('reqReason').value = "";
         loadSupervisorRequests();
     }
@@ -567,7 +592,7 @@
         box.innerHTML = '';
         if(reqs.length === 0) { box.innerHTML = 'No requests sent.'; return; }
         let ul = document.createElement('ul');
-        reqs.reverse().forEach(r => {
+        reqs.slice().reverse().forEach(r => {
             let li = document.createElement('li');
             li.innerHTML = `<b>${r.date}</b> - ${r.empName} <span class="badge-${r.status.toLowerCase()}">${r.status}</span>`;
             ul.appendChild(li);
