@@ -3,6 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- CACHE CONTROL (Mobile update issue fix) -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    
+    <!-- PWA (Mobile App Install) Tags -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1a365d">
+    
     <title>MS ELECTRICALS - Attendance System</title>
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
@@ -12,8 +21,9 @@
         .field { margin-bottom: 12px; }
         label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 13px; }
         input, select, button, textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; }
-        button { background: #0066cc; color: white; border: none; font-weight: bold; cursor: pointer; margin-top: 5px; border-radius: 6px; }
+        button { background: #0066cc; color: white; border: none; font-weight: bold; cursor: pointer; margin-top: 5px; border-radius: 6px; transition: 0.3s; }
         button:hover { opacity: 0.9; }
+        button:disabled { background: #888; cursor: not-allowed; }
         .hidden { display: none !important; }
         table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; background: #fff; }
         th, td { border: 1px solid #e2e8f0; padding: 10px; text-align: center; }
@@ -66,7 +76,7 @@
     <!-- ADMIN PANEL -->
     <div id="adminPanel" class="hidden">
         <div style="display:flex; justify-content:space-between; align-items:center;">
-            <h2>👑 Admin Master Panel - MS ELECTRICALS</h2>
+            <h2>👑 Admin Master Panel</h2>
             <button type="button" class="btn-danger" style="padding:8px 15px;" onclick="doLogout()">Logout</button>
         </div>
         
@@ -84,7 +94,7 @@
 
         <!-- DRIVE LINK -->
         <div class="card">
-            <h3 style="margin:0 0 8px 0;">☁️ Google Drive Auto-Save Link</h3>
+            <h3 style="margin:0 0 8px 0;">☁️ Google Cloud & Sheet Auto-Save Link</h3>
             <div style="display:flex; gap:6px;" class="flex-row">
                 <input type="text" id="cloudUrlInput" placeholder="Paste Apps Script Web App URL here...">
                 <button type="button" class="btn-success" style="width:150px;" onclick="saveCloudUrl()">Save Link</button>
@@ -122,7 +132,7 @@
         <!-- ATTENDANCE REPORTS -->
         <div class="card">
             <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-                <h3>📋 Attendance Reports</h3>
+                <h3>📋 Local Attendance Reports</h3>
                 <button type="button" class="btn-success" onclick="exportMonthlyExcel()">📊 Download CSV</button>
             </div>
             <input type="text" id="searchLog" placeholder="🔍 Date ya Site search karein..." onkeyup="loadAdminData()" style="margin-bottom:10px;">
@@ -182,6 +192,13 @@
 </div>
 
 <script>
+    // PWA Service Worker Registration
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js').then(() => {
+            console.log("Service Worker Registered!");
+        });
+    }
+
     function getStorage(key, fallback) {
         try { let item = localStorage.getItem(key); return item ? JSON.parse(item) : fallback; } catch (e) { return fallback; }
     }
@@ -197,6 +214,7 @@
         let id = document.getElementById('uid').value.trim().toLowerCase();
         let pass = document.getElementById('upass').value.trim();
 
+        // Admin Check
         if (id === 'admin' && pass === 'admin123') {
             activeUser = { role: 'admin', id: 'admin' };
             document.getElementById('loginSection').classList.add('hidden');
@@ -206,7 +224,8 @@
             return;
         }
 
-        let supervisors = getStorage('supervisors', [{id:'lalshah', pass:'1234'}]);
+        // Supervisor Check
+        let supervisors = getStorage('supervisors', []); // Default hata diya gaya hai
         let found = supervisors.find(s => s.id.toLowerCase() === id && s.pass === pass);
 
         if (found) {
@@ -218,13 +237,14 @@
             loadSupervisorChecklist();
             loadSupervisorRequests();
         } else {
-            alert('Galat Credentials!\nAdmin: admin / admin123\nSupervisor default: lalshah / 1234');
+            // SECURE ALERT (No Passwords shown)
+            alert('❌ Invalid ID or Password! Kripya sahi details check karein.');
         }
     }
 
     function doLogout() { activeUser = null; location.reload(); }
     function resetSystemData() {
-        if(confirm("Dhyan Dein! Saara data delete ho jayega. Continue?")) {
+        if(confirm("Dhyan Dein! Saara local data delete ho jayega. Continue?")) {
             localStorage.clear();
             alert("System Refresh Done!");
             location.reload();
@@ -240,7 +260,7 @@
         let id = document.getElementById('newSupId').value.trim();
         let pass = document.getElementById('newSupPass').value.trim();
         if(!id || !pass) return;
-        let sups = getStorage('supervisors', [{id:'lalshah', pass:'1234'}]);
+        let sups = getStorage('supervisors', []);
         if(sups.find(s => s.id.toLowerCase() === id.toLowerCase())) { alert("ID exists!"); return; }
         sups.push({id: id, pass: pass});
         setStorage('supervisors', sups);
@@ -249,7 +269,7 @@
         loadAdminData();
     }
     function deleteSupervisor(id) {
-        let sups = getStorage('supervisors', [{id:'lalshah', pass:'1234'}]).filter(s => s.id !== id);
+        let sups = getStorage('supervisors', []).filter(s => s.id !== id);
         setStorage('supervisors', sups);
         loadAdminData();
     }
@@ -275,11 +295,25 @@
         setStorage('attendanceLogs', logs);
         loadAdminData();
     }
+    function exportMonthlyExcel() {
+        let logs = getStorage('attendanceLogs', []);
+        if(logs.length === 0) { alert("No data to export!"); return; }
+        let csv = "Date,Site,Supervisor,Present,Total\n";
+        logs.forEach(l => {
+            csv += `${l.date},${l.site},${l.sup},${l.presentCount},${l.totalCount}\n`;
+        });
+        let blob = new Blob([csv], {type: "text/csv"});
+        let url = window.URL.createObjectURL(blob);
+        let a = document.createElement("a");
+        a.href = url;
+        a.download = "Attendance_Report.csv";
+        a.click();
+    }
 
     function loadAdminData() {
         let labs = getStorage('labours', []);
         let logs = getStorage('attendanceLogs', []);
-        let sups = getStorage('supervisors', [{id:'lalshah', pass:'1234'}]);
+        let sups = getStorage('supervisors', []);
         let reqs = getStorage('attendanceReqs', []);
         
         let todayStr = new Date().toISOString().split('T')[0];
@@ -331,7 +365,6 @@
         let req = reqs.find(r => r.reqId == reqId);
         if(req) {
             req.status = 'Approved';
-            // Find that date's log for this supervisor
             let targetLog = logs.find(l => l.date === req.date && l.sup === req.sup);
             if(targetLog) {
                 let det = targetLog.details.find(d => d.empId === req.empId);
@@ -382,6 +415,7 @@
         box.innerHTML = html + '</table>';
     }
 
+    // Photo Compression Code 
     function processImage(event) {
         let file = event.target.files[0];
         if(!file) return;
@@ -392,78 +426,110 @@
             let img = new Image();
             img.src = e.target.result;
             img.onload = function() {
-                let canvas = document.createElement('canvas');
-                let scale = Math.min(800 / img.width, 1);
-                canvas.width = img.width * scale; canvas.height = img.height * scale;
-                canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-                compressedImageBase64 = canvas.toDataURL('image/jpeg', 0.5);
+                let canvas = document.createElement("canvas");
+                let ctx = canvas.getContext("2d");
+                let MAX_WIDTH = 800; // Auto-compress size
+                let scaleSize = MAX_WIDTH / img.width;
+                canvas.width = MAX_WIDTH;
+                canvas.height = img.height * scaleSize;
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                compressedImageBase64 = canvas.toDataURL("image/jpeg", 0.6); // 60% quality
                 document.getElementById('photoStatus').innerHTML = "✅ Photo Ready!";
             }
         }
     }
 
-    function submitAttendance() {
+    // Submit Attendance to Cloud and Local
+    async function submitAttendance() {
         let date = document.getElementById('attendanceDate').value;
         let site = document.getElementById('siteNameInput').value.trim();
-        let logs = getStorage('attendanceLogs', []);
-        
-        if(!date || !site) { alert('Date aur Site Name zaruri hai!'); return; }
+        if(!date || !site) { alert("Date aur Site Name zaroori hai!"); return; }
 
-        // Block Duplicate Entry for same Date & Site
-        let exists = logs.find(l => l.date === date && l.site.toLowerCase() === site.toLowerCase());
-        if(exists) { alert('⚠️ Is Site ki attendance aaj ke liye pehle hi submit ho chuki hai. Duplicate allowed nahi hai.'); return; }
+        let chkBoxes = document.querySelectorAll('.chkBox');
+        let details = [];
+        let presentCount = 0;
+        let totalCount = chkBoxes.length;
 
-        let presentCount = 0; let details = []; let absentNames = [];
-        document.querySelectorAll('.chkBox').forEach(cb => {
-            if(cb.checked) { presentCount++; details.push({ empId: cb.getAttribute('data-empid'), name: cb.getAttribute('data-name'), status: 'Present' }); } 
-            else { absentNames.push(cb.getAttribute('data-name')); details.push({ empId: cb.getAttribute('data-empid'), name: cb.getAttribute('data-name'), status: 'Absent' }); }
+        chkBoxes.forEach(chk => {
+            let status = chk.checked ? 'Present' : 'Absent';
+            if(chk.checked) presentCount++;
+            details.push({ empId: chk.dataset.empid, name: chk.dataset.name, status: status });
         });
 
-        let logEntry = { date: date, site: site, sup: activeUser.id, presentCount: presentCount, totalCount: details.length, photo: compressedImageBase64, details: details };
-        logs.unshift(logEntry); setStorage('attendanceLogs', logs);
+        document.getElementById('submitBtn').innerText = "⏳ Submitting...";
+        document.getElementById('submitBtn').disabled = true;
 
-        // Drive Sync
+        let payload = {
+            date: date,
+            site: site,
+            sup: activeUser.id,
+            presentCount: presentCount,
+            totalCount: totalCount,
+            details: details,
+            photo: compressedImageBase64
+        };
+
+        // 1. Save Locally
+        let logs = getStorage('attendanceLogs', []);
+        logs.push(payload);
+        setStorage('attendanceLogs', logs);
+
+        // 2. Send to Cloud (Apps Script -> Google Sheets)
         let cloudUrl = getStorage('cloudUrl', '');
-        if(cloudUrl !== '') {
-            fetch(cloudUrl, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(logEntry) }).catch(e=>console.log(e));
+        if(cloudUrl) {
+            try {
+                await fetch(cloudUrl, {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+                alert("✅ Attendance Saved to System & Cloud!");
+            } catch (e) {
+                alert("⚠️ Saved locally, but Cloud sync failed. (Check Internet)");
+            }
+        } else {
+            alert("✅ Attendance Saved Locally! (Admin ne Cloud link set nahi kiya hai)");
         }
 
-        // WhatsApp Share Prompt
-        let msg = `*MS ELECTRICALS*\n📅 Date: ${date}\n🏗️ Site: ${site}\n👤 Sup: ${activeUser.id}\n✅ Present: ${presentCount}/${details.length}\n❌ Absent: ${absentNames.join(', ') || 'None'}`;
-        if(confirm("✅ Saved! WhatsApp par share karna chahte hain?")) {
-            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
-        }
-        location.reload();
+        // Reset Form
+        document.getElementById('submitBtn').innerText = "🚀 Submit Attendance";
+        document.getElementById('submitBtn').disabled = false;
+        compressedImageBase64 = "";
+        document.getElementById('photoStatus').innerHTML = "Upload limit & Auto-Compress active.";
+        document.getElementById('siteNameInput').value = "";
+        chkBoxes.forEach(c => c.checked = false);
     }
 
     function sendRequest() {
-        let rDate = document.getElementById('reqDate').value;
-        let rLab = document.getElementById('reqLabour').value;
-        let rRea = document.getElementById('reqReason').value;
-        if(!rDate || !rLab) { alert('Date aur Labour select karein!'); return; }
-        
-        let [empId, empName] = rLab.split('|');
+        let reqDate = document.getElementById('reqDate').value;
+        let reqLab = document.getElementById('reqLabour').value;
+        let reqReason = document.getElementById('reqReason').value.trim();
+        if(!reqDate || !reqLab || !reqReason) { alert("Sab details bharein!"); return; }
+
+        let [empId, empName] = reqLab.split('|');
         let reqs = getStorage('attendanceReqs', []);
-        reqs.push({ reqId: Date.now(), date: rDate, sup: activeUser.id, empId: empId, empName: empName, reason: rRea, status: 'Pending' });
+        reqs.push({
+            reqId: Date.now(),
+            date: reqDate,
+            sup: activeUser.id,
+            empId: empId,
+            empName: empName,
+            reason: reqReason,
+            status: 'Pending'
+        });
         setStorage('attendanceReqs', reqs);
-        
-        alert("Request Admin ko bhej di gayi hai!");
-        document.getElementById('reqReason').value = '';
+        alert("Request Sent to Admin!");
+        document.getElementById('reqReason').value = "";
         loadSupervisorRequests();
     }
 
     function loadSupervisorRequests() {
         let reqs = getStorage('attendanceReqs', []).filter(r => r.sup === activeUser.id);
-        let html = '<table><tr><th>Date</th><th>Labour</th><th>Status</th></tr>';
-        reqs.slice().reverse().forEach(r => { html += `<tr><td>${r.date}</td><td>${r.empName}</td><td><span class="badge-${r.status.toLowerCase()}">${r.status}</span></td></tr>`; });
-        document.getElementById('myRequestsBox').innerHTML = reqs.length ? html + '</table>' : '<p>Apki koi requests nahi hain.</p>';
-    }
-
-    function exportMonthlyExcel() {
-        let logs = getStorage('attendanceLogs', []);
-        let csv = "Date,Site Name,Supervisor,Total Present,Total Registered\n";
-        logs.forEach(l => { csv += `"${l.date}","${l.site}","${l.sup}","${l.presentCount}","${l.totalCount}"\n`; });
-        let link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' })); link.download = `MS_Electricals_Report.csv`; link.click();
+        let box = document.getElementById('myRequestsBox');
+        let html = '<ul>';
+        reqs.reverse().forEach(r => {
+            html += `<li><b>${r.date}</b> - ${r.empName} <span class="badge-${r.status.toLowerCase()}">${r.status}</span></li>`;
+        });
+        box.innerHTML = reqs.length ? html + '</ul>' : 'No requests sent.';
     }
 </script>
 </body>
